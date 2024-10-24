@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# medley: Predictive Modeling for Missing Data
+# medley: Predictive Modeling with Missing Data
 
 <!-- badges: start -->
 

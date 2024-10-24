@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 library(badger)
 ```
 
-# medley: Predictive Modeling for Missing Data
+# medley: Predictive Modeling with Missing Data
 
 <!-- badges: start -->
 `r badge_cran_release("medley", "orange")`
