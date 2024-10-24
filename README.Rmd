@@ -1,0 +1,33 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+library(badger)
+```
+
+# medley: Predictive Modeling for Missing Data
+
+<!-- badges: start -->
+`r badge_cran_release("medley", "orange")`
+`r badge_devel("jbryer/medley", "blue")`
+`r badge_github_actions("jbryer/medley")`
+<!-- badges: end -->
+
+The goal of medley is to provide a framework for training predictive models where there is a systematic pattern of missing data. For example, situations where baseline data may be available but as time progresses additional variables may be available. This framework allows for training models for different combinations of data availability allowing for single function call to get predictions on new data.
+
+## Installation
+
+You can install the development version of medley like so:
+
+``` r
+remotes::install_github('jbryer/medley')
+```

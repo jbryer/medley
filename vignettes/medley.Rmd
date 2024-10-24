@@ -1,0 +1,234 @@
+---
+title: "medley: Predictive Modeling with Missing Data"
+output: 
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+author: Jason Bryer
+vignette: >
+  %\VignetteIndexEntry{medley: Predictive Modeling with Missing Data}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(medley)
+library(ComplexHeatmap)
+library(mice)
+data(daacs, package = 'medley')
+```
+
+# Introduction
+
+Most predictive modeling strategies require complete data to train and predict outcomes. A common strategy is to impute the missing data before training the models. However, in many situations, missing data occurs in a systematic way therefore violating the missing completely at random (MCAR) assumption. For instance, data may be collected over multiple time periods or the available data may vary depending on varying collection protocols or selection bias at the individual level. The goal of this package is to provide a framework for conducting predictive model that takes into account the patterns of missing data.
+
+The motivating example for this approach predictive modeling comes from predicting student success in college. Institutions have become increasingly interested in using predictive models to identify students at risk for attrition as early as possible in order to provided targeted interventions and supports. Information about students is collected over several months beginning at the college application phase, commitment to enroll, orientation, and finally behavior data as the student begins coursework. In addition to missing data being related to where the student is in the process, students may opt to not provide certain data elements. This results in a complex system where a single predictive model is appropriate.
+
+# Data Source
+
+This paper will explore data from the Diagnostic Assessment and Achievement of College Skills (DAACS; https://daacs.net). DAACS is a suite of technological and social supports designed to optimize student learning. Students complete assessments in self-regulated learning, writing, mathematics, and reading and upon completion receive immediate feedback in terms of developing, emerging, and mastering. The feedback is tailored to their results. The data for this paper was part of a larger randomized control trial where DAACS was embedded within orientation for the treatment students. Although students were instructed that orientation was required, there were no consequences for not completing orientation and therefore approximately `r round(mean(is.na(daacs$srl)) * 100)`% of students did not attempt orientation, and therefore did not complete DAACS. The goal is to predicted term-to-term retention (the `retained` variable) for each student based upon the available data. Table \@ref(tab:descriptives) for descriptive statistics which reveals that the DAACS results are not complete for some students. The overall retention rate is `r round(mean(daacs$retained)*100, digits = 2)`%.
+
+```{r descriptives, echo=FALSE, warning=FALSE, message=FALSE, results='kable'}
+# vtable::sumtable(daacs, title = 'Summary Statistics')
+vtable::sumtable(daacs, title = 'Descriptive Statistics',
+                 # caption = 'Descriptive Statistics',
+                 out = 'kable',
+                 summ = c('N(x)', 'mean(x)', 'sd(x)', 'median(x)'),
+                 summ.names = c('N', 'Mean', 'Std Dev', 'Median'))
+```
+
+## Missing Data Patterns
+
+To begin we first explore the patterns of missing data. Figure \@ref(fig:upset) is an UpSet plot created from a shadow matrix^[A shadow matrix has the same dimensions of the original data but the values correspond to whether the observation is missing (`FALSE`) or not (`TRUE`).]. Each vertical line corresponds to a set, or combination, of variables. The dots indicate that that variable is included in the set. The bars on the top correspond to the number of observations in that set and the bars to the right correspond to the total number of observed values. The largest set includes only the demographics variables, the second largest included demographics and all DAACS variables. There is a third set that includes self-regulated learning along with demographics that is worth considering since it contains more than 10% of the observations. It should be noted that there is a potential fourth set which included demographic variables along with three of DAACS variables (SRL, reading, and math). However, since this set has fewer than 10% of the observations we will use a three set/model solution. 
+
+```{r upset, fig.cap='UpSet plot of the missing data', eval=TRUE, fig.height=7, fig.width = 6.5}
+shadow_matrix <- as.data.frame(!is.na(daacs))
+ComplexHeatmap::make_comb_mat(shadow_matrix) |> ComplexHeatmap::UpSet()
+```
+
+## Data Preparation
+
+To perform the predictive modeling we will split the data into training (70%) and validation (30%) data sets.
+
+```{r split-dataset}
+set.seed(2112); train_rows <- sample(nrow(daacs), nrow(daacs) * 0.7)
+daacs_train <- daacs[train_rows,]
+daacs_valid <- daacs[-train_rows,]
+```
+
+# Baseline Models
+
+There are generally two choices when estimating models when there is missing data: 1) Model using only the available data or 2) Impute the missing data before modeling. 
+
+## Using available data
+
+In the DAACS data set as depicted in Figure \@ref(fig:upset) the demographics variables were observed for all students. To start we train a logistic regression model on the training data.
+
+```{r demographics-model}
+lr_out <- glm(data = daacs_train,
+              formula = retained ~ income + employment + ell + ed_mother + ed_father +
+                ethnicity + gender + military + age,
+              family = binomial(link = 'logit'))
+```
+
+We can get predicted values from the validation data set and print the confusion matrix.
+
+```{r demographics-model-predictions}
+lr_predictions <- predict(lr_out, newdata = daacs_valid, type = 'response')
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = lr_predictions > 0.5)
+```
+
+The overall accuracy using only the demographic variables is `r round(100 * accuracy(daacs_valid$retained, lr_predictions > 0.5), digits = 2)`%
+
+## Multiple imputation
+
+Another common approach to modeling with missing data is multiple imputation. The `mice` package (Multivariate Imputations by Chained Equations) is a robust and popular approach to imputing missing data. For simplicity we will use the final imputed data set for comparison^[There are multiple approaches suggested for getting predicted values from models trained using imputed data sets. For a more detailed explenation see this Github issue: https://github.com/amices/mice/issues/82].
+
+```{r mice-impute, message = FALSE}
+mice_out <- mice::mice(daacs[,-1], M = 5, seed = 2112, printFlag = FALSE)
+daacs_complete <- cbind(retained = daacs$retained, mice::complete(mice_out))
+
+daacs_train_complete <- daacs_complete[train_rows,]
+daacs_valid_complete <- daacs_complete[-train_rows,]
+```
+
+With the missing DAACS data imputed we can train a logistic regression model using the full data set.
+
+```{r mice-model}
+mice_lr_out <- glm(formula = retained ~ .,
+                   data = daacs_train_complete,
+                   family = binomial(link = logit))
+mice_lr_predictions <- predict(mice_lr_out, newdata = daacs_valid_complete, type = 'response')
+confusion_matrix(observed = daacs_valid_complete$retained,
+                 predicted = mice_lr_predictions > 0.5)
+```
+
+The overall accuracy using only imputed data set is `r round(100 * accuracy(daacs_valid_complete$retained, mice_lr_predictions > 0.5), digits = 2)`%
+
+```{r model-with-shadow-matrix, include=FALSE, eval=FALSE}
+names(shadow_matrix) <- paste0(names(shadow_matrix), '_miss')
+shadow_matrix <- shadow_matrix[,!apply(shadow_matrix, 2, all)]
+daacs_train_complete <- cbind(daacs_train_complete, shadow_matrix[train_rows,])
+daacs_valid_complete <- cbind(daacs_valid_complete, shadow_matrix[-train_rows,])
+mice_lr_out2 <- glm(formula = retained ~ .,
+                   data = daacs_train_complete,
+                   family = binomial(link = logit))
+summary(mice_lr_out2)
+mice_lr_predictions2 <- predict(mice_lr_out2, newdata = daacs_valid_complete, type = 'response')
+confusion_matrix(observed = daacs_valid_complete$retained,
+                 predicted = mice_lr_predictions2 > 0.5)
+```
+
+
+# Medley models
+
+The `medley_train` function implements a step wise approach to training models. The `data` and `formula` parameters specify the data set and full model (i.e. all possible predictor variables to be considered), similar to other modeling functions in R. The `method` parameter indicates what model procedure should be used. In this example we will estimate logistic regression models. The `medley_train` can take any additional parameters that need to be passed to the `method` function.
+
+```{r medley-train-lr}
+medley_lr_out <- medley_train(data = daacs_train,
+                              formula = retained ~ .,
+                              method = glm,
+                              family = binomial(link = logit))
+
+# TODO: Move
+# medley_lr_out$model_observations |> View()
+daacs_train[medley_lr_out$model_observations[,1],]$retained |> mean()
+daacs_train[medley_lr_out$model_observations[,2],]$retained |> mean()
+daacs_train[medley_lr_out$model_observations[,3],]$retained |> mean()
+```
+
+The object returned by `medley_train` contains the following elements:
+
+* `n_models` - The number of models estimated.
+* `formulas` - A list of the formulas used for each model. 
+* `models` - A list containing the model output for each model. In this example this would contain the results of the `glm` function call.
+* `data` - The full data set used to train the models.
+* `model_observations` - A data frame indicating which models each observation was used in. The rows correspond to the rows in `data` and the columns correspond to the model.
+
+For example, we can see what the models that were estimated below. By default the algorithm will use all sets that have at least 10% of the total observations. This can be adjusted using the `min_set_size` parameter (see the `get_variable_sets()` function). Optionally you can specify the models directly by passing a list of formulas with the `var_sets` parameter.
+
+```{r print-formulas}
+medley_lr_out$formulas
+```
+
+Table \@ref(tab:modelresults) summarizes the results of the three models.
+
+```{r modelresults, echo=FALSE, warning=FALSE}
+reg_tab <- huxtable::huxreg(medley_lr_out$models, error_pos = 'right')
+huxtable::set_caption(reg_tab, 'Logistic regression results')
+```
+
+The S3 generic function `predict` has been implemented. Specifying the `newdata` parameter will give predictions for the validation data set.
+
+```{r medley-predictions-lr}
+medley_lr_predictions <- predict(medley_lr_out,
+                                 newdata = daacs_valid,
+                                 type = 'response')
+```
+
+The confusion matrix is provided below. The overall accuracy for the medley model is `r round(yardstick::accuracy_vec(estimate = factor(lr_predictions > 0.5), truth = factor(daacs_valid$retained)) * 100, digits = 3)`% which is a `r round(100 * (yardstick::accuracy_vec(estimate = factor(lr_predictions > 0.5), truth = factor(daacs_valid$retained)) - mean(daacs_valid$retained)), digits = 2)`% over the baseline, or *null*, model.
+
+```{r roc, fig.width=8.5, fig.height=3, include=FALSE}
+calculate_roc(medley_lr_predictions,
+              daacs_valid$retained) |> plot()
+```
+
+```{r medley-confusion-matrix-lr}
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = medley_lr_predictions > 0.5)
+```
+
+## Random Forests
+
+The core functionality of the `medley_train` algorithm is to select the most appropriate model given the available data. The specific predictive model is up to the user. Fernandez-Delgado et al (2014) evaluated the performance of 179 classifiers across 121 data sets. Their results showed that, in general, random forest was the best performing model. To begin, we load the `randomForest` pacakge and convert our dependent variable to a factor to ensure a classification (versus regression) model is estimated.
+
+```{r random-forest-setup, message=FALSE}
+library(randomForest)
+daacs_train$retained <- as.factor(daacs_train$retained)
+daacs_valid$retained <- as.factor(daacs_valid$retained)
+```
+
+Training and predicting are the same as above except we set `method = randomForest`.
+
+```{r}
+medley_rf_out <- medley_train(data = daacs_train,
+                              formula = retained ~ .,
+                              method = randomForest)
+medley_rf_predictions <- predict(medley_rf_out, 
+                                 newdata = daacs_valid,
+                                 type = "response")
+```
+
+Lastly, the confusion matrix gives the overall accuracy. In this example though we see the random forest performs sligthly worse than logistic regression.
+
+```{r medley-confusion-matrix-rf}
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = medley_rf_predictions )
+```
+
+## Using observations in multiple models
+
+The default behavior of the `medley_train` algorithm is for each observation to be used in only one model. However, in this particular example, we have complete demographic data for all students so we could potentially use all observations to train that model. The `exclusive_membership` parameter will allow observations to be used in training models for which there is complete data. 
+
+```{r medley-exclusive-membership}
+medley_rf_out2 <- medley_train(data = daacs_train,
+                              formula = retained ~ .,
+                              exclusive_membership = FALSE,
+                              method = randomForest)
+medley_rf_predictions2 <- predict(medley_rf_out2, 
+                          newdata = daacs_valid,
+                          type = "response")
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = medley_rf_predictions2 )
+
+```
+
+As the results above show we get a very modest increase in the overall accuracy. It should be noted that predictions are estimated from the model that uses most variables for each observation.
+
+
