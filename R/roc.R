@@ -64,7 +64,6 @@ calculate_roc <- function(predictions,
 #' @param digits number of digits to print.
 #' @param ... currently not used.
 #' @method summary roc
-#' @seealso calculate_roc
 #' @export
 summary.roc <- function(object, digits = 3, ...) {
 	cat(paste0('AUC = ', round(attr(object, 'auc'), digits = digits), '\n',
@@ -82,7 +81,6 @@ utils::globalVariables(c("fpr", "tpr", "threshold", "cost"))
 #' @param curve values can be cost, accuracy, or NULL.
 #' @param ... currently unused.
 #' @return a ggplot2 expression.
-#' @seealso calculate_roc
 #' @import ggplot2
 #' @method plot roc
 #' @importFrom gridExtra grid.arrange

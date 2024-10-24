@@ -40,8 +40,3 @@ a ggplot2 expression.
 This function was adapted from Raffel (https://github.com/joyofdata):
 https://github.com/joyofdata/joyofdata-articles/blob/master/roc-auc/calculate_roc.R
 }
-\seealso{
-calculate_roc
-
-calculate_roc
-}

@@ -26,7 +26,7 @@ confusion_matrix <- function(observed, predicted) {
 print.confusionmatrix <- function(x, digits = 2, ...) {
 	class(x) <- 'data.frame'
 	x$value <- paste0(
-		x$Freq, ' (', formatC(100 * x$percent, width = digits + 2), '%)'
+		x$Freq, ' (', formatC(100 * x$percent, digits = digits, flag = '0', format = 'f'), '%)'
 	)
 	x1 <- reshape2::dcast(x, observed ~ predicted, value.var = 'value')
 	x2 <- reshape2::dcast(x, observed ~ predicted, value.var = 'percent')
