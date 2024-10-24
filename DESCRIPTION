@@ -23,6 +23,7 @@ Imports:
     reshape2,
     stats
 Suggests: 
+    bookdown,
     knitr,
     mice,
     randomForest,
@@ -33,5 +34,3 @@ VignetteBuilder:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.1
-Enhances: 
-    bookdown
