@@ -1,4 +1,4 @@
-#' Calculated a confusion matrix
+#' Calculate a confusion matrix
 #'
 #' @param observed vector of observed values.
 #' @param predicted vector of predicted values.
@@ -39,7 +39,7 @@ print.confusionmatrix <- function(x, digits = 2, ...) {
 	cat(paste0('Accuracy: ', round(100 * (x2[1,2] + x2[2,3]), digits = digits), '%'))
 }
 
-#' Provides the accuracy rate.
+#' Calculate the accuracy rate.
 #'
 #' This function provides the overall accuracy rate for the two vectors.
 #'

@@ -81,7 +81,17 @@ medley_train <- function(
 #' @importFrom huxtable huxreg print_screen
 #' @export
 summary.medley <- function(object, ...) {
-	huxtable::huxreg(object$models) |> huxtable::print_screen()
+	# huxtable::huxreg(object$models) |> huxtable::print_screen()
+	model_sum <- data.frame(
+		Model = seq_len(object$n_models),
+		n = apply(object$model_observation, 2, sum),
+		Success = apply(object$model_observation, 2, FUN = function(x) {
+			object$data[x,]$retained |> mean() * 100
+		}),
+		Formula = as.character(object$formulas),
+		check.names = FALSE
+	)
+	model_sum
 }
 
 #' @rdname medley_train

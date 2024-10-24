@@ -142,15 +142,16 @@ medley_lr_out <- medley_train(data = daacs_train,
 ```
 
 ```{r model-summaries-setup, echo=FALSE, results='hide'}
-model_sum <- data.frame(
-  Model = seq_len(medley_lr_out$n_models),
-  n = apply(medley_lr_out$model_observation, 2, sum),
-  Retained = apply(medley_lr_out$model_observation, 2, FUN = function(x) {
-    daacs_train[x,]$retained |> mean() * 100
-  }),
-  `Model Formula` = as.character(medley_lr_out$formulas),
-  check.names = FALSE
-)
+model_sum <- summary(medley_lr_out)
+medley_lr_predictions <- predict(medley_lr_out,
+                                 newdata = daacs_valid,
+                                 type = 'response')
+# model_sum$Accuracy <- NA
+# for(i in seq_len(medley_lr_out$n_models)) {
+#   model_sum[i,]$Accuracy <- accuracy(daacs_train[medley_lr_out$model_observations[,i],]$retained,
+#                                      medley_lr_predictions[medley_lr_out$model_observations[,i]] > 0.5) * 100
+# }
+# model_sum <- model_sum[,c('Model', 'n', 'Success', 'Accuracy', 'Formula')]
 ```
 
 Table \@ref(tab:model-summaries) provides the baseline retention rate by model along with the number of observations and formula for each of the models. Before exploring the specific of the modeling this reveals that the pattern of missing data is predictive of success. Students who complete all four DAACS assessments are `r round(model_sum[1,]$Retained - model_sum[nrow(model_sum),]$Retained, digits = 1)`% more likely to be retained then students who did not complete any of the assessments.
