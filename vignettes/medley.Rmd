@@ -172,7 +172,7 @@ medley_lr_predictions <- predict(medley_lr_out,
                                  type = 'response')
 ```
 
-The confusion matrix is provided below. The overall accuracy for the medley model is `r round(yardstick::accuracy_vec(estimate = factor(lr_predictions > 0.5), truth = factor(daacs_valid$retained)) * 100, digits = 3)`% which is a `r round(100 * (yardstick::accuracy_vec(estimate = factor(lr_predictions > 0.5), truth = factor(daacs_valid$retained)) - mean(daacs_valid$retained)), digits = 2)`% over the baseline, or *null*, model.
+The confusion matrix is provided below. The overall accuracy for the medley model is `r round(accuracy(lr_predictions > 0.5, daacs_valid$retained) * 100, digits = 3)`% which is a `r round(100 * (accuracy(lr_predictions > 0.5, daacs_valid$retained) - mean(daacs_valid$retained)), digits = 2)`% over the baseline, or *null*, model.
 
 ```{r roc, fig.width=8.5, fig.height=3, include=FALSE}
 calculate_roc(medley_lr_predictions,
@@ -196,7 +196,7 @@ daacs_valid$retained <- as.factor(daacs_valid$retained)
 
 Training and predicting are the same as above except we set `method = randomForest`.
 
-```{r}
+```{r medley-random-forest}
 medley_rf_out <- medley_train(data = daacs_train,
                               formula = retained ~ .,
                               method = randomForest)
