@@ -11,6 +11,9 @@
 status](https://github.com/jbryer/medley/workflows/R-CMD-check/badge.svg)](https://github.com/jbryer/medley/actions)
 <!-- badges: end -->
 
+**Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
+**Website:** <https://jbryer.github.io/medley/>
+
 The goal of medley is to provide a framework for training predictive
 models where there is a systematic pattern of missing data. For example,
 situations where baseline data may be available but as time progresses

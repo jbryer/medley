@@ -112,6 +112,10 @@ confusion_matrix(observed = daacs_valid_complete$retained,
 The overall accuracy using only imputed data set is `r round(100 * accuracy(daacs_valid_complete$retained, mice_lr_predictions > 0.5), digits = 2)`%
 
 ```{r model-with-shadow-matrix, include=FALSE, eval=FALSE}
+# TODO: Decide whether this should be included in the paper. The accuracy of using
+# the shadow matrix in the predictive model is nearly the same as the medley
+# approach. However, in practice, making predictions on new data would require
+# imputing the missing values which is not trivial.
 names(shadow_matrix) <- paste0(names(shadow_matrix), '_miss')
 shadow_matrix <- shadow_matrix[,!apply(shadow_matrix, 2, all)]
 daacs_train_complete <- cbind(daacs_train_complete, shadow_matrix[train_rows,])
@@ -135,12 +139,27 @@ medley_lr_out <- medley_train(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
+```
 
-# TODO: Move
-# medley_lr_out$model_observations |> View()
-daacs_train[medley_lr_out$model_observations[,1],]$retained |> mean()
-daacs_train[medley_lr_out$model_observations[,2],]$retained |> mean()
-daacs_train[medley_lr_out$model_observations[,3],]$retained |> mean()
+```{r model-summaries-setup, echo=FALSE, results='hide'}
+model_sum <- data.frame(
+  Model = seq_len(medley_lr_out$n_models),
+  n = apply(medley_lr_out$model_observation, 2, sum),
+  Retained = apply(medley_lr_out$model_observation, 2, FUN = function(x) {
+    daacs_train[x,]$retained |> mean() * 100
+  }),
+  `Model Formula` = as.character(medley_lr_out$formulas),
+  check.names = FALSE
+)
+```
+
+Table \@ref(tab:model-summaries) provides the baseline retention rate by model along with the number of observations and formula for each of the models. Before exploring the specific of the modeling this reveals that the pattern of missing data is predictive of success. Students who complete all four DAACS assessments are `r round(model_sum[1,]$Retained - model_sum[nrow(model_sum),]$Retained, digits = 1)`% more likely to be retained then students who did not complete any of the assessments.
+
+```{r model-summaries, echo=FALSE, results='asis'}
+knitr::kable(model_sum, 
+             row.names = FALSE,
+             digits = 2, 
+             caption = "Baseline retention rate by model")
 ```
 
 The object returned by `medley_train` contains the following elements:
@@ -151,13 +170,9 @@ The object returned by `medley_train` contains the following elements:
 * `data` - The full data set used to train the models.
 * `model_observations` - A data frame indicating which models each observation was used in. The rows correspond to the rows in `data` and the columns correspond to the model.
 
-For example, we can see what the models that were estimated below. By default the algorithm will use all sets that have at least 10% of the total observations. This can be adjusted using the `min_set_size` parameter (see the `get_variable_sets()` function). Optionally you can specify the models directly by passing a list of formulas with the `var_sets` parameter.
+By default the algorithm will use all sets that have at least 10% of the total observations (see \@ref(tab:model-summaries)). This can be adjusted using the `min_set_size` parameter (see the `get_variable_sets()` function). Optionally you can specify the models directly by passing a list of formulas with the `var_sets` parameter.
 
-```{r print-formulas}
-medley_lr_out$formulas
-```
-
-Table \@ref(tab:modelresults) summarizes the results of the three models.
+Table \@ref(tab:modelresults) provides the model summaries for the `r medley_lr_out$n_models` models estimated.
 
 ```{r modelresults, echo=FALSE, warning=FALSE}
 reg_tab <- huxtable::huxreg(medley_lr_out$models, error_pos = 'right')

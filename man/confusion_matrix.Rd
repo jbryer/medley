@@ -7,7 +7,7 @@
 \usage{
 confusion_matrix(observed, predicted)
 
-\method{print}{confusionmatrix}(x, digits = 3, ...)
+\method{print}{confusionmatrix}(x, digits = 2, ...)
 }
 \arguments{
 \item{observed}{vector of observed values.}
@@ -16,7 +16,7 @@ confusion_matrix(observed, predicted)
 
 \item{x}{the result of [confusion_matrix()].}
 
-\item{digits}{number of digits to print.}
+\item{digits}{number of decimal places to print.}
 
 \item{...}{currently not used.}
 }

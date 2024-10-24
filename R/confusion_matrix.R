@@ -18,15 +18,15 @@ confusion_matrix <- function(observed, predicted) {
 
 #' @rdname confusion_matrix
 #' @param x the result of [confusion_matrix()].
-#' @param digits number of digits to print.
+#' @param digits number of decimal places to print.
 #' @param ... currently not used.
 #' @method print confusionmatrix
 #' @importFrom reshape2 dcast
 #' @export
-print.confusionmatrix <- function(x, digits = 3, ...) {
+print.confusionmatrix <- function(x, digits = 2, ...) {
 	class(x) <- 'data.frame'
 	x$value <- paste0(
-		x$Freq, ' (', 100 * round(x$percent, digits = digits), '%)'
+		x$Freq, ' (', formatC(100 * x$percent, width = digits + 2), '%)'
 	)
 	x1 <- reshape2::dcast(x, observed ~ predicted, value.var = 'value')
 	x2 <- reshape2::dcast(x, observed ~ predicted, value.var = 'percent')
