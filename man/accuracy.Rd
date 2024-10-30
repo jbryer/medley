@@ -2,7 +2,7 @@
 % Please edit documentation in R/confusion_matrix.R
 \name{accuracy}
 \alias{accuracy}
-\title{Provides the accuracy rate.}
+\title{Calculate the accuracy rate.}
 \usage{
 accuracy(observed, predicted)
 }

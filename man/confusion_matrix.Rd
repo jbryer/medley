@@ -3,7 +3,7 @@
 \name{confusion_matrix}
 \alias{confusion_matrix}
 \alias{print.confusionmatrix}
-\title{Calculated a confusion matrix}
+\title{Calculate a confusion matrix}
 \usage{
 confusion_matrix(observed, predicted)
 
@@ -24,5 +24,5 @@ confusion_matrix(observed, predicted)
 a data.frame of the confusion matrix.
 }
 \description{
-Calculated a confusion matrix
+Calculate a confusion matrix
 }
