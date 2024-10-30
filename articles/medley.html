@@ -1050,6 +1050,46 @@ the model that uses most variables for each observation.</p>
 </table>
 <p><strong>Note:</strong> Improvement is the difference with the overall
 retention rate of 56.17%.</p>
+<pre><code>                                                    Predicted             
+                                  Model Observed        FALSE         TRUE
+ Observed data only logistic regression    FALSE 295 (19.07%) 386 (24.95%)
+                                            TRUE 216 (13.96%) 650 (42.02%)
+                                                                          
+       Observed data only random forest    FALSE 279 (18.03%) 402 (25.99%)
+                                            TRUE 251 (16.22%) 615 (39.75%)
+                                                                          
+   Imputed data set logistic regression    FALSE 297 (19.20%) 384 (24.82%)
+                                            TRUE 213 (13.77%) 653 (42.21%)
+                                                                          
+         Imputed data set random forest    FALSE 278 (17.97%) 403 (26.05%)
+                                            TRUE 207 (13.38%) 659 (42.60%)
+                                                                          
+        Medley with logistic regression    FALSE 306 (19.78%) 375 (24.24%)
+                                            TRUE 174 (11.25%) 692 (44.73%)
+                                                                          
+              Medley with random forest    FALSE 320 (20.69%) 361 (23.34%)
+                                            TRUE 194 (12.54%) 672 (43.44%)
+                                                                          
+         
+ Accuracy
+         
+         
+   61.09%
+         
+         
+   57.79%
+         
+         
+   61.41%
+         
+         
+   60.57%
+         
+         
+   64.51%
+         
+         
+   64.12%</code></pre>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
