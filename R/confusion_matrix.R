@@ -20,10 +20,12 @@ confusion_matrix <- function(observed, predicted) {
 #' @rdname confusion_matrix
 #' @param x the result of [confusion_matrix()].
 #' @param digits number of decimal places to print.
+#' @param row.names not used.
+#' @param optional not used.
 #' @param ... currently not used.
 #' @method as.data.frame confusionmatrix
 #' @export
-as.data.frame.confusionmatrix <- function(x, digits = 2, ...) {
+as.data.frame.confusionmatrix <- function(x, row.names = NULL, optional = FALSE, digits = 2, ...) {
 	class(x) <- 'data.frame'
 	x$value <- paste0(
 		x$Freq, ' (', formatC(100 * x$percent, digits = digits, flag = '0', format = 'f'), '%)'

@@ -8,7 +8,7 @@
 \usage{
 confusion_matrix(observed, predicted)
 
-\method{as.data.frame}{confusionmatrix}(x, digits = 2, ...)
+\method{as.data.frame}{confusionmatrix}(x, row.names = NULL, optional = FALSE, digits = 2, ...)
 
 \method{print}{confusionmatrix}(x, digits = 2, ...)
 }
@@ -18,6 +18,10 @@ confusion_matrix(observed, predicted)
 \item{predicted}{vector of predicted values.}
 
 \item{x}{the result of [confusion_matrix()].}
+
+\item{row.names}{not used.}
+
+\item{optional}{not used.}
 
 \item{digits}{number of decimal places to print.}
 
