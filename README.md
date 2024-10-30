@@ -8,7 +8,7 @@
 [![](https://www.r-pkg.org/badges/version/medley?color=orange)](https://cran.r-project.org/package=medley)
 [![](https://img.shields.io/badge/devel%20version-0.9.0-blue.svg)](https://github.com/jbryer/medley)
 [![R build
-status](https://github.com/jbryer/medley/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jbryer/medley/actions)
+status](https://github.com/jbryer/medley/workflows/R-CMD-check/badge.svg)](https://github.com/jbryer/medley/actions)
 <!-- badges: end -->
 
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  

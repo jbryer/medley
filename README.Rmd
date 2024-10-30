@@ -19,7 +19,7 @@ library(badger)
 <!-- badges: start -->
 `r badge_cran_release("medley", "orange")`
 `r badge_devel("jbryer/medley", "blue")`
-`r badge_github_actions("jbryer/medley", action = "R-CMD-check.yaml")`
+`r badge_github_actions("jbryer/medley", action = "R-CMD-check")`
 <!-- badges: end -->
 
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
