@@ -10,18 +10,19 @@
 get_variable_sets <- function(data, formula, min_set_size = 0.1) {
 	formula <- expand_formula(formula, data)
 	dep_var <- all.vars(formula)[1]
+	data <- data[,all.vars(formula)]
 	n_missing_by_var <- apply(data, 2, FUN = function(x) { sum(is.na(x)) })
 	if(n_missing_by_var[1] != 0) {
 		stop('Missing values in the dependent variable is not supported..')
 	}
-	if(sum(n_missing_by_var == 0) < 2) {
-		# TODO: this may not be a hard requirement
-		stop('At least one independent variable must have no missingness.')
-	}
+	# if(sum(n_missing_by_var == 0) < 2) {
+	# 	# TODO: this may not be a hard requirement
+	# 	stop('At least one independent variable must have no missingness.')
+	# }
 	shadow_matrix <- as.data.frame(!is.na(data))
 	comb_mat <- ComplexHeatmap::make_comb_mat(shadow_matrix)
 	sets <- as.data.frame(comb_mat, stringsAsFactors = FALSE)
-	sets <- sets[,ComplexHeatmap::comb_size(comb_mat) / nrow(data) > min_set_size]
+	sets <- sets[,ComplexHeatmap::comb_size(comb_mat) / nrow(data) > min_set_size, drop=FALSE]
 
 	if(ncol(sets) == 0) { # Not sure the minimum number of sets
 		stop(paste0('No sets contained at least ', min_set_size * 100, '% of rows.'))

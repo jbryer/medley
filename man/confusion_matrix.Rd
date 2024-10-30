@@ -2,10 +2,13 @@
 % Please edit documentation in R/confusion_matrix.R
 \name{confusion_matrix}
 \alias{confusion_matrix}
+\alias{as.data.frame.confusionmatrix}
 \alias{print.confusionmatrix}
 \title{Calculate a confusion matrix}
 \usage{
 confusion_matrix(observed, predicted)
+
+\method{as.data.frame}{confusionmatrix}(x, digits = 2, ...)
 
 \method{print}{confusionmatrix}(x, digits = 2, ...)
 }
