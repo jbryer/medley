@@ -11,10 +11,22 @@ get_variable_sets <- function(data, formula, min_set_size = 0.1) {
 	formula <- expand_formula(formula, data)
 	dep_var <- all.vars(formula)[1]
 	data <- data[,all.vars(formula)]
+
 	n_missing_by_var <- apply(data, 2, FUN = function(x) { sum(is.na(x)) })
 	if(n_missing_by_var[1] != 0) {
 		stop('Missing values in the dependent variable is not supported..')
 	}
+
+	# Check for any rows where all predictor variables are missing
+	n_missing_by_row <- apply(data[,names(data) != dep_var], 1,
+							  FUN = function(x) { sum(is.na(x)) })
+	rows_all_missing <- n_missing_by_row == ncol(data) - 1
+	if(sum(rows_all_missing) > 0) {
+		warning(paste0(sum(rows_all_missing), ' (', round(sum(rows_all_missing) / nrow(data) * 100, digits = 2),
+					   '%) observations have no observed values in the independent variables and will be removed.'))
+		data <- data[!rows_all_missing,]
+	}
+
 	# if(sum(n_missing_by_var == 0) < 2) {
 	# 	# TODO: this may not be a hard requirement
 	# 	stop('At least one independent variable must have no missingness.')
@@ -26,11 +38,13 @@ get_variable_sets <- function(data, formula, min_set_size = 0.1) {
 
 	if(ncol(sets) == 0) { # Not sure the minimum number of sets
 		stop(paste0('No sets contained at least ', min_set_size * 100, '% of rows.'))
+	} else if(ncol(sets) == 1) {
+		warning('Only one set found. Estimations will be made from a single model.')
 	}
 
 	vars_per_set <- apply(sets, 2, sum)
-	sets <- sets[,order(vars_per_set, decreasing = TRUE)]
-	sets <- sets[row.names(sets) != dep_var,]
+	sets <- sets[,order(vars_per_set, decreasing = TRUE), drop=FALSE]
+	sets <- sets[row.names(sets) != dep_var,,drop=FALSE]
 
 	var_sets <- list()
 	for(i in seq_len(ncol(sets))) {

@@ -5,8 +5,8 @@ output:
     base_format: rmarkdown::html_vignette
 author: Jason Bryer
 vignette: >
-  %\VignetteIndexEntry{medley: Predictive Modeling with Missing Data}
   %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{medley: Predictive Modeling with Missing Data}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console
@@ -312,5 +312,14 @@ combine_confusion_matrices(
   `Medley with logistic regression` = confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
   `Medley with random forest` = confusion_matrix(daacs_valid$retained, medley_rf_predictions == 2)
 ) |>  print(row.names = FALSE)
+
+# combine_confusion_matrices(
+#   confusion_matrix(daacs_valid$retained, lr_predictions > 0.5),
+#   confusion_matrix(daacs_valid$retained, rf_predictions),
+#   confusion_matrix(daacs_valid_complete$retained, mice_lr_predictions > 0.5),
+#   confusion_matrix(daacs_valid_complete$retained, mice_rf_predictions),
+#   confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
+#   confusion_matrix(daacs_valid$retained, medley_rf_predictions == 2)
+# ) |>  print(row.names = FALSE)
 
 ```
