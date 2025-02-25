@@ -51,8 +51,8 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>medley: Predictive Modeling with Missing Data</h1>
-                        <h4 data-toc-skip class="author">Jason
-Bryer</h4>
+                        <h4 data-toc-skip class="author">Jason Bryer,
+Ph.D.</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/jbryer/medley/blob/master/vignettes/medley.Rmd" class="external-link"><code>vignettes/medley.Rmd</code></a></small>
@@ -71,7 +71,7 @@ occurs in a systematic way therefore violating the missing completely at
 random (MCAR) assumption. For instance, data may be collected over
 multiple time periods or the available data may vary depending on
 varying collection protocols or selection bias at the individual level.
-The goal of this package is to provide a framework for conducting
+The <code>medley</code> package provides a framework for estimating
 predictive model that takes into account the patterns of missing
 data.</p>
 <p>The motivating example for this approach predictive modeling comes
@@ -515,16 +515,17 @@ age
 <h3 id="missing-data-patterns">Missing Data Patterns<a class="anchor" aria-label="anchor" href="#missing-data-patterns"></a>
 </h3>
 <p>To begin we first explore the patterns of missing data. Figure
-@ref(fig:upset) is an UpSet plot created from a shadow matrix<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;A shadow matrix has the same dimensions of the original
+@ref(fig:upset) is an UpSet plot <span class="citation">(Gu, Eils, and
+Schlesner 2016)</span> created from a shadow matrix<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;A shadow matrix has the same dimensions of the original
 data but the values correspond to whether the observation is missing
-(&lt;code&gt;FALSE&lt;/code&gt;) or not (&lt;code&gt;TRUE&lt;/code&gt;).&lt;/p&gt;"><sup>1</sup></a>. Each
-vertical line corresponds to a set, or combination, of variables. The
-dots indicate that that variable is included in the set. The bars on the
-top correspond to the number of observations in that set and the bars to
-the right correspond to the total number of observed values. The largest
-set includes only the demographics variables, the second largest
-included demographics and all DAACS variables. There is a third set that
-includes self-regulated learning along with demographics that is worth
+(&lt;code&gt;FALSE&lt;/code&gt;) or not (&lt;code&gt;TRUE&lt;/code&gt;).&lt;/p&gt;"><sup>1</sup></a>. Each vertical line
+corresponds to a set, or combination, of variables. The dots indicate
+that that variable is included in the set. The bars on the top
+correspond to the number of observations in that set and the bars to the
+right correspond to the total number of observed values. The largest set
+includes only the demographics variables, the second largest included
+demographics and all DAACS variables. There is a third set that includes
+self-regulated learning along with demographics that is worth
 considering since it contains more than 10% of the observations. It
 should be noted that there is a potential fourth set which included
 demographic variables along with three of DAACS variables (SRL, reading,
@@ -594,6 +595,44 @@ the confusion matrix.</p>
 61.09%</p>
 </div>
 <div class="section level3">
+<h3 id="mean-imputation">Mean Imputation<a class="anchor" aria-label="anchor" href="#mean-imputation"></a>
+</h3>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">daacs_complete_mean</span> <span class="op">&lt;-</span> <span class="va">daacs</span></span>
+<span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">2</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">daacs_complete_mean</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">missing_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">daacs_complete_mean</span><span class="op">[</span>,<span class="va">i</span><span class="op">]</span><span class="op">)</span></span>
+<span>    <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">missing_rows</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">daacs_complete_mean</span><span class="op">[</span><span class="va">missing_rows</span>, <span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">daacs_complete_mean</span><span class="op">[</span>,<span class="va">i</span><span class="op">]</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">daacs_train_complete_mean</span> <span class="op">&lt;-</span> <span class="va">daacs_complete_mean</span><span class="op">[</span><span class="va">train_rows</span>,<span class="op">]</span></span>
+<span><span class="va">daacs_valid_complete_mean</span> <span class="op">&lt;-</span> <span class="va">daacs_complete_mean</span><span class="op">[</span><span class="op">-</span><span class="va">train_rows</span>,<span class="op">]</span></span>
+<span></span>
+<span><span class="va">mean_lr_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
+<span>                   data <span class="op">=</span> <span class="va">daacs_train_complete_mean</span>,</span>
+<span>                   family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="va">logit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mean_lr_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mean_lr_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete_mean</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete_mean</span><span class="op">$</span><span class="va">retained</span>,</span>
+<span>                 predicted <span class="op">=</span> <span class="va">mean_lr_predictions</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="co">#&gt;               predicted             </span></span>
+<span><span class="co">#&gt;   observed        FALSE         TRUE</span></span>
+<span><span class="co">#&gt;      FALSE 292 (18.88%) 389 (25.15%)</span></span>
+<span><span class="co">#&gt;       TRUE 212 (13.70%) 654 (42.28%)</span></span>
+<span><span class="co">#&gt; Accuracy: 61.15%</span></span>
+<span></span>
+<span><span class="va">mean_rf_out</span> <span class="op">&lt;-</span> <span class="fu">randomForest</span><span class="op">(</span>formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">retained</span><span class="op">)</span> <span class="op">~</span> <span class="va">.</span>,</span>
+<span>                            data <span class="op">=</span> <span class="va">daacs_train_complete_mean</span><span class="op">)</span></span>
+<span><span class="va">mean_rf_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mean_rf_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete_mean</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete_mean</span><span class="op">$</span><span class="va">retained</span>,</span>
+<span>                 predicted <span class="op">=</span> <span class="va">mean_rf_predictions</span><span class="op">)</span></span>
+<span><span class="co">#&gt;               predicted             </span></span>
+<span><span class="co">#&gt;   observed        FALSE         TRUE</span></span>
+<span><span class="co">#&gt;      FALSE 316 (20.43%) 365 (23.59%)</span></span>
+<span><span class="co">#&gt;       TRUE 178 (11.51%) 688 (44.47%)</span></span>
+<span><span class="co">#&gt; Accuracy: 64.9%</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="multiple-imputation">Multiple imputation<a class="anchor" aria-label="anchor" href="#multiple-imputation"></a>
 </h3>
 <p>Another common approach to modeling with missing data is multiple
@@ -603,20 +642,20 @@ data. For simplicity we will use the final imputed data set for
 comparison<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;There are multiple approaches suggested for getting
 predicted values from models trained using imputed data sets. For a more
 detailed explenation see this Github issue: &lt;a href="https://github.com/amices/mice/issues/82" class="external-link uri"&gt;https://github.com/amices/mice/issues/82&lt;/a&gt;&lt;/p&gt;'><sup>2</sup></a>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mice_out</span> <span class="op">&lt;-</span> <span class="fu">mice</span><span class="fu">::</span><span class="fu"><a href="https://amices.org/mice/reference/mice.html" class="external-link">mice</a></span><span class="op">(</span><span class="va">daacs</span><span class="op">[</span>,<span class="op">-</span><span class="fl">1</span><span class="op">]</span>, M <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">2112</span>, printFlag <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="va">daacs_complete</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>retained <span class="op">=</span> <span class="va">daacs</span><span class="op">$</span><span class="va">retained</span>, <span class="fu">mice</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/complete.html" class="external-link">complete</a></span><span class="op">(</span><span class="va">mice_out</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">daacs_complete_mice</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>retained <span class="op">=</span> <span class="va">daacs</span><span class="op">$</span><span class="va">retained</span>, <span class="fu">mice</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/complete.html" class="external-link">complete</a></span><span class="op">(</span><span class="va">mice_out</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">daacs_train_complete</span> <span class="op">&lt;-</span> <span class="va">daacs_complete</span><span class="op">[</span><span class="va">train_rows</span>,<span class="op">]</span></span>
-<span><span class="va">daacs_valid_complete</span> <span class="op">&lt;-</span> <span class="va">daacs_complete</span><span class="op">[</span><span class="op">-</span><span class="va">train_rows</span>,<span class="op">]</span></span></code></pre></div>
+<span><span class="va">daacs_train_complete_mice</span> <span class="op">&lt;-</span> <span class="va">daacs_complete_mice</span><span class="op">[</span><span class="va">train_rows</span>,<span class="op">]</span></span>
+<span><span class="va">daacs_valid_complete_mice</span> <span class="op">&lt;-</span> <span class="va">daacs_complete_mice</span><span class="op">[</span><span class="op">-</span><span class="va">train_rows</span>,<span class="op">]</span></span></code></pre></div>
 <p>With the missing DAACS data imputed we can train a logistic
 regression model using the full data set.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mice_lr_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span>formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
-<span>                   data <span class="op">=</span> <span class="va">daacs_train_complete</span>,</span>
+<span>                   data <span class="op">=</span> <span class="va">daacs_train_complete_mice</span>,</span>
 <span>                   family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="va">logit</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">mice_lr_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mice_lr_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete</span><span class="op">$</span><span class="va">retained</span>,</span>
+<span><span class="va">mice_lr_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mice_lr_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete_mice</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete_mice</span><span class="op">$</span><span class="va">retained</span>,</span>
 <span>                 predicted <span class="op">=</span> <span class="va">mice_lr_predictions</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt;               predicted             </span></span>
 <span><span class="co">#&gt;   observed        FALSE         TRUE</span></span>
@@ -625,9 +664,9 @@ regression model using the full data set.</p>
 <span><span class="co">#&gt; Accuracy: 61.41%</span></span>
 <span></span>
 <span><span class="va">mice_rf_out</span> <span class="op">&lt;-</span> <span class="fu">randomForest</span><span class="op">(</span>formula <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">retained</span><span class="op">)</span> <span class="op">~</span> <span class="va">.</span>,</span>
-<span>                            data <span class="op">=</span> <span class="va">daacs_train_complete</span><span class="op">)</span></span>
-<span><span class="va">mice_rf_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mice_rf_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete</span><span class="op">$</span><span class="va">retained</span>,</span>
+<span>                            data <span class="op">=</span> <span class="va">daacs_train_complete_mice</span><span class="op">)</span></span>
+<span><span class="va">mice_rf_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">mice_rf_out</span>, newdata <span class="op">=</span> <span class="va">daacs_valid_complete_mice</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid_complete_mice</span><span class="op">$</span><span class="va">retained</span>,</span>
 <span>                 predicted <span class="op">=</span> <span class="va">mice_rf_predictions</span><span class="op">)</span></span>
 <span><span class="co">#&gt;               predicted             </span></span>
 <span><span class="co">#&gt;   observed        FALSE         TRUE</span></span>
@@ -649,7 +688,7 @@ indicates what model procedure should be used. In this example we will
 estimate logistic regression models. The <code>medley_train</code> can
 take any additional parameters that need to be passed to the
 <code>method</code> function.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">medley_lr_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              method <span class="op">=</span> <span class="va">glm</span>,</span>
@@ -926,14 +965,14 @@ models estimated.</p>
 <p>The S3 generic function <code>predict</code> has been implemented.
 Specifying the <code>newdata</code> parameter will give predictions for
 the validation data set.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">medley_lr_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">medley_lr_out</span>,</span>
 <span>                                 newdata <span class="op">=</span> <span class="va">daacs_valid</span>,</span>
 <span>                                 type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span></code></pre></div>
 <p>The confusion matrix is provided below. The overall accuracy for the
 medley model is 61.086% which is a 5.11% over the baseline, or
 <em>null</em>, model.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span>,</span>
 <span>                 predicted <span class="op">=</span> <span class="va">medley_lr_predictions</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt;               predicted             </span></span>
@@ -952,12 +991,12 @@ sets. Their results showed that, in general, random forest was the best
 performing model. To begin, we load the <code>randomForest</code>
 pacakge and convert our dependent variable to a factor to ensure a
 classification (versus regression) model is estimated.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">daacs_train</span><span class="op">$</span><span class="va">retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">daacs_train</span><span class="op">$</span><span class="va">retained</span><span class="op">)</span></span>
 <span><span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span><span class="op">)</span></span></code></pre></div>
 <p>Training and predicting are the same as above except we set
 <code>method = randomForest</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">medley_rf_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              method <span class="op">=</span> <span class="va">randomForest</span><span class="op">)</span></span>
@@ -967,7 +1006,7 @@ classification (versus regression) model is estimated.</p>
 <p>Lastly, the confusion matrix gives the overall accuracy. In this
 example though we see the random forest performs sligthly worse than
 logistic regression.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span>,</span>
 <span>                 predicted <span class="op">=</span> <span class="va">medley_rf_predictions</span> <span class="op">)</span></span>
 <span><span class="co">#&gt;               predicted             </span></span>
@@ -985,7 +1024,7 @@ particular example, we have complete demographic data for all students
 so we could potentially use all observations to train that model. The
 <code>exclusive_membership</code> parameter will allow observations to
 be used in training models for which there is complete data.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">medley_rf_out2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              exclusive_membership <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -1027,12 +1066,22 @@ the model that uses most variables for each observation.</p>
 <td align="right">1.62</td>
 </tr>
 <tr class="odd">
-<td align="left">Imputed data set logistic regression</td>
+<td align="left">Mean imputed data set with logistic regression</td>
+<td align="right">61.15</td>
+<td align="right">4.98</td>
+</tr>
+<tr class="even">
+<td align="left">Mean imputed data set with random forest</td>
+<td align="right">64.90</td>
+<td align="right">8.73</td>
+</tr>
+<tr class="odd">
+<td align="left">Mice imputed data set logistic regression</td>
 <td align="right">61.41</td>
 <td align="right">5.24</td>
 </tr>
 <tr class="even">
-<td align="left">Imputed data set random forest</td>
+<td align="left">Mice imputed data set random forest</td>
 <td align="right">60.57</td>
 <td align="right">4.40</td>
 </tr>
@@ -1050,46 +1099,33 @@ the model that uses most variables for each observation.</p>
 </table>
 <p><strong>Note:</strong> Improvement is the difference with the overall
 retention rate of 56.17%.</p>
-<pre><code>                                                    Predicted             
-                                  Model Observed        FALSE         TRUE
- Observed data only logistic regression    FALSE 295 (19.07%) 386 (24.95%)
-                                            TRUE 216 (13.96%) 650 (42.02%)
-                                                                          
-       Observed data only random forest    FALSE 279 (18.03%) 402 (25.99%)
-                                            TRUE 251 (16.22%) 615 (39.75%)
-                                                                          
-   Imputed data set logistic regression    FALSE 297 (19.20%) 384 (24.82%)
-                                            TRUE 213 (13.77%) 653 (42.21%)
-                                                                          
-         Imputed data set random forest    FALSE 278 (17.97%) 403 (26.05%)
-                                            TRUE 207 (13.38%) 659 (42.60%)
-                                                                          
-        Medley with logistic regression    FALSE 306 (19.78%) 375 (24.24%)
-                                            TRUE 174 (11.25%) 692 (44.73%)
-                                                                          
-              Medley with random forest    FALSE 320 (20.69%) 361 (23.34%)
-                                            TRUE 194 (12.54%) 672 (43.44%)
-                                                                          
-         
- Accuracy
-         
-         
-   61.09%
-         
-         
-   57.79%
-         
-         
-   61.41%
-         
-         
-   60.57%
-         
-         
-   64.51%
-         
-         
-   64.12%</code></pre>
+<pre><code>                                                    Predicted                      
+                                  Model Observed        FALSE         TRUE Accuracy
+ Observed data only logistic regression    FALSE 295 (19.07%) 386 (24.95%)         
+                                            TRUE 216 (13.96%) 650 (42.02%)         
+                                                                             61.09%
+       Observed data only random forest    FALSE 279 (18.03%) 402 (25.99%)         
+                                            TRUE 251 (16.22%) 615 (39.75%)         
+                                                                             57.79%
+   Imputed data set logistic regression    FALSE 297 (19.20%) 384 (24.82%)         
+                                            TRUE 213 (13.77%) 653 (42.21%)         
+                                                                             61.41%
+         Imputed data set random forest    FALSE 278 (17.97%) 403 (26.05%)         
+                                            TRUE 207 (13.38%) 659 (42.60%)         
+                                                                             60.57%
+        Medley with logistic regression    FALSE 306 (19.78%) 375 (24.24%)         
+                                            TRUE 174 (11.25%) 692 (44.73%)         
+                                                                             64.51%
+              Medley with random forest    FALSE 320 (20.69%) 361 (23.34%)         
+                                            TRUE 194 (12.54%) 672 (43.44%)         
+                                                                             64.12%</code></pre>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-ComplexHeatmap" class="csl-entry">
+Gu, Zuguang, Roland Eils, and Matthias Schlesner. 2016. <span>“Complex
+Heatmaps Reveal Patterns and Correlations in Multidimensional Genomic
+Data.”</span> <em>Bioinformatics</em>. <a href="https://doi.org/10.1093/bioinformatics/btw313" class="external-link">https://doi.org/10.1093/bioinformatics/btw313</a>.
+</div>
+</div>
 </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
