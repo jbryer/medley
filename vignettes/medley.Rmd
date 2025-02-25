@@ -3,7 +3,8 @@ title: "medley: Predictive Modeling with Missing Data"
 output: 
   bookdown::html_document2:
     base_format: rmarkdown::html_vignette
-author: Jason Bryer
+author: Jason Bryer, Ph.D.
+bibliography: references.bib
 vignette: >
   %\VignetteEncoding{UTF-8}
   %\VignetteIndexEntry{medley: Predictive Modeling with Missing Data}
@@ -28,7 +29,7 @@ null_accuracy <- mean(daacs$retained)
 
 # Introduction
 
-Most predictive modeling strategies require complete data to train and predict outcomes. A common strategy is to impute the missing data before training the models. However, in many situations, missing data occurs in a systematic way therefore violating the missing completely at random (MCAR) assumption. For instance, data may be collected over multiple time periods or the available data may vary depending on varying collection protocols or selection bias at the individual level. The goal of this package is to provide a framework for conducting predictive model that takes into account the patterns of missing data.
+Most predictive modeling strategies require complete data to train and predict outcomes. A common strategy is to impute the missing data before training the models. However, in many situations, missing data occurs in a systematic way therefore violating the missing completely at random (MCAR) assumption. For instance, data may be collected over multiple time periods or the available data may vary depending on varying collection protocols or selection bias at the individual level. The `medley` package provides a framework for estimating predictive model that takes into account the patterns of missing data.
 
 The motivating example for this approach predictive modeling comes from predicting student success in college. Institutions have become increasingly interested in using predictive models to identify students at risk for attrition as early as possible in order to provided targeted interventions and supports. Information about students is collected over several months beginning at the college application phase, commitment to enroll, orientation, and finally behavior data as the student begins coursework. In addition to missing data being related to where the student is in the process, students may opt to not provide certain data elements. This results in a complex system where a single predictive model is appropriate.
 
@@ -47,7 +48,7 @@ vtable::sumtable(daacs, title = 'Descriptive Statistics',
 
 ## Missing Data Patterns
 
-To begin we first explore the patterns of missing data. Figure \@ref(fig:upset) is an UpSet plot created from a shadow matrix^[A shadow matrix has the same dimensions of the original data but the values correspond to whether the observation is missing (`FALSE`) or not (`TRUE`).]. Each vertical line corresponds to a set, or combination, of variables. The dots indicate that that variable is included in the set. The bars on the top correspond to the number of observations in that set and the bars to the right correspond to the total number of observed values. The largest set includes only the demographics variables, the second largest included demographics and all DAACS variables. There is a third set that includes self-regulated learning along with demographics that is worth considering since it contains more than 10% of the observations. It should be noted that there is a potential fourth set which included demographic variables along with three of DAACS variables (SRL, reading, and math). However, since this set has fewer than 10% of the observations we will use a three set/model solution. 
+To begin we first explore the patterns of missing data. Figure \@ref(fig:upset) is an UpSet plot [@ComplexHeatmap] created from a shadow matrix^[A shadow matrix has the same dimensions of the original data but the values correspond to whether the observation is missing (`FALSE`) or not (`TRUE`).]. Each vertical line corresponds to a set, or combination, of variables. The dots indicate that that variable is included in the set. The bars on the top correspond to the number of observations in that set and the bars to the right correspond to the total number of observed values. The largest set includes only the demographics variables, the second largest included demographics and all DAACS variables. There is a third set that includes self-regulated learning along with demographics that is worth considering since it contains more than 10% of the observations. It should be noted that there is a potential fourth set which included demographic variables along with three of DAACS variables (SRL, reading, and math). However, since this set has fewer than 10% of the observations we will use a three set/model solution. 
 
 ```{r upset, fig.cap='UpSet plot of the missing data', eval=TRUE, fig.height=7, fig.width = 6.5}
 shadow_matrix <- as.data.frame(!is.na(daacs))
@@ -104,37 +105,71 @@ confusion_matrix(observed = daacs_valid$retained,
 
 The overall accuracy using only the demographic variables is `r round(100 * accuracy(daacs_valid$retained, lr_predictions > 0.5), digits = 2)`%
 
+## Mean Imputation
+
+```{r}
+daacs_complete_mean <- daacs
+for(i in 2:ncol(daacs_complete_mean)) {
+	missing_rows <- is.na(daacs_complete_mean[,i])
+	if(sum(missing_rows) > 0) {
+		daacs_complete_mean[missing_rows, i] <- mean(daacs_complete_mean[,i], na.rm = TRUE)
+	}
+}
+```
+
+```{r}
+daacs_train_complete_mean <- daacs_complete_mean[train_rows,]
+daacs_valid_complete_mean <- daacs_complete_mean[-train_rows,]
+
+mean_lr_out <- glm(formula = retained ~ .,
+                   data = daacs_train_complete_mean,
+                   family = binomial(link = logit))
+mean_lr_predictions <- predict(mean_lr_out, newdata = daacs_valid_complete_mean, type = 'response')
+confusion_matrix(observed = daacs_valid_complete_mean$retained,
+                 predicted = mean_lr_predictions > 0.5)
+
+mean_rf_out <- randomForest(formula = factor(retained) ~ .,
+                            data = daacs_train_complete_mean)
+mean_rf_predictions <- predict(mean_rf_out, newdata = daacs_valid_complete_mean, type = 'response')
+confusion_matrix(observed = daacs_valid_complete_mean$retained,
+                 predicted = mean_rf_predictions)
+```
+
+```{r, include=FALSE}
+
+```
+
 ## Multiple imputation
 
 Another common approach to modeling with missing data is multiple imputation. The `mice` package (Multivariate Imputations by Chained Equations) is a robust and popular approach to imputing missing data. For simplicity we will use the final imputed data set for comparison^[There are multiple approaches suggested for getting predicted values from models trained using imputed data sets. For a more detailed explenation see this Github issue: https://github.com/amices/mice/issues/82].
 
 ```{r mice-impute, message = FALSE}
 mice_out <- mice::mice(daacs[,-1], M = 5, seed = 2112, printFlag = FALSE)
-daacs_complete <- cbind(retained = daacs$retained, mice::complete(mice_out))
+daacs_complete_mice <- cbind(retained = daacs$retained, mice::complete(mice_out))
 
-daacs_train_complete <- daacs_complete[train_rows,]
-daacs_valid_complete <- daacs_complete[-train_rows,]
+daacs_train_complete_mice <- daacs_complete_mice[train_rows,]
+daacs_valid_complete_mice <- daacs_complete_mice[-train_rows,]
 ```
 
 With the missing DAACS data imputed we can train a logistic regression model using the full data set.
 
 ```{r mice-model}
 mice_lr_out <- glm(formula = retained ~ .,
-                   data = daacs_train_complete,
+                   data = daacs_train_complete_mice,
                    family = binomial(link = logit))
-mice_lr_predictions <- predict(mice_lr_out, newdata = daacs_valid_complete, type = 'response')
-confusion_matrix(observed = daacs_valid_complete$retained,
+mice_lr_predictions <- predict(mice_lr_out, newdata = daacs_valid_complete_mice, type = 'response')
+confusion_matrix(observed = daacs_valid_complete_mice$retained,
                  predicted = mice_lr_predictions > 0.5)
 
 mice_rf_out <- randomForest(formula = factor(retained) ~ .,
-                            data = daacs_train_complete)
-mice_rf_predictions <- predict(mice_rf_out, newdata = daacs_valid_complete, type = 'response')
-confusion_matrix(observed = daacs_valid_complete$retained,
+                            data = daacs_train_complete_mice)
+mice_rf_predictions <- predict(mice_rf_out, newdata = daacs_valid_complete_mice, type = 'response')
+confusion_matrix(observed = daacs_valid_complete_mice$retained,
                  predicted = mice_rf_predictions)
 
 ```
 
-The overall accuracy using only imputed data set is `r round(100 * accuracy(daacs_valid_complete$retained, mice_lr_predictions > 0.5), digits = 2)`%
+The overall accuracy using only imputed data set is `r round(100 * accuracy(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5), digits = 2)`%
 
 ```{r model-with-shadow-matrix, include=FALSE, eval=FALSE}
 # TODO: Decide whether this should be included in the paper. The accuracy of using
@@ -143,14 +178,14 @@ The overall accuracy using only imputed data set is `r round(100 * accuracy(daac
 # imputing the missing values which is not trivial.
 names(shadow_matrix) <- paste0(names(shadow_matrix), '_miss')
 shadow_matrix <- shadow_matrix[,!apply(shadow_matrix, 2, all)]
-daacs_train_complete <- cbind(daacs_train_complete, shadow_matrix[train_rows,])
-daacs_valid_complete <- cbind(daacs_valid_complete, shadow_matrix[-train_rows,])
+daacs_train_complete_mice <- cbind(daacs_train_complete_mice, shadow_matrix[train_rows,])
+daacs_valid_complete_mice <- cbind(daacs_valid_complete_mice, shadow_matrix[-train_rows,])
 mice_lr_out2 <- glm(formula = retained ~ .,
-                   data = daacs_train_complete,
+                   data = daacs_train_complete_mice,
                    family = binomial(link = logit))
 summary(mice_lr_out2)
-mice_lr_predictions2 <- predict(mice_lr_out2, newdata = daacs_valid_complete, type = 'response')
-confusion_matrix(observed = daacs_valid_complete$retained,
+mice_lr_predictions2 <- predict(mice_lr_out2, newdata = daacs_valid_complete_mice, type = 'response')
+confusion_matrix(observed = daacs_valid_complete_mice$retained,
                  predicted = mice_lr_predictions2 > 0.5)
 ```
 
@@ -278,16 +313,20 @@ overall <- data.frame(
   Method = c(
     'Observed data only logistic regression',
     'Observed data only random forest',
-    'Imputed data set logistic regression',
-    'Imputed data set random forest',
+    'Mean imputed data set with logistic regression',
+    'Mean imputed data set with random forest',
+    'Mice imputed data set logistic regression',
+    'Mice imputed data set random forest',
     'Medley with logistic regression',
     'Medley with random forest'
   ),
   Accuracy = c(
     100 * accuracy(daacs_valid$retained, lr_predictions > 0.5),
     100 * accuracy(daacs_valid$retained, rf_predictions),
-    100 * accuracy(daacs_valid_complete$retained, mice_lr_predictions > 0.5),
-    100 * accuracy(daacs_valid_complete$retained, mice_rf_predictions),
+    100 * accuracy(daacs_valid_complete_mean$retained, mean_lr_predictions > 0.5),
+    100 * accuracy(daacs_valid_complete_mean$retained, mean_rf_predictions),
+    100 * accuracy(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
+    100 * accuracy(daacs_valid_complete_mice$retained, mice_rf_predictions),
     100 * accuracy(daacs_valid$retained, medley_lr_predictions > 0.5),
     100 * accuracy(daacs_valid$retained, medley_rf_predictions)
   )
@@ -304,11 +343,12 @@ knitr::kable(overall,
 ```
 
 ```{r, echo=FALSE, prompt=FALSE, comment=''}
+options(width = 120)
 combine_confusion_matrices(
   `Observed data only logistic regression` = confusion_matrix(daacs_valid$retained, lr_predictions > 0.5),
   `Observed data only random forest` = confusion_matrix(daacs_valid$retained, rf_predictions),
-  `Imputed data set logistic regression` = confusion_matrix(daacs_valid_complete$retained, mice_lr_predictions > 0.5),
-  `Imputed data set random forest` = confusion_matrix(daacs_valid_complete$retained, mice_rf_predictions),
+  `Imputed data set logistic regression` = confusion_matrix(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
+  `Imputed data set random forest` = confusion_matrix(daacs_valid_complete_mice$retained, mice_rf_predictions),
   `Medley with logistic regression` = confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
   `Medley with random forest` = confusion_matrix(daacs_valid$retained, medley_rf_predictions == 2)
 ) |>  print(row.names = FALSE)
@@ -316,8 +356,8 @@ combine_confusion_matrices(
 # combine_confusion_matrices(
 #   confusion_matrix(daacs_valid$retained, lr_predictions > 0.5),
 #   confusion_matrix(daacs_valid$retained, rf_predictions),
-#   confusion_matrix(daacs_valid_complete$retained, mice_lr_predictions > 0.5),
-#   confusion_matrix(daacs_valid_complete$retained, mice_rf_predictions),
+#   confusion_matrix(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
+#   confusion_matrix(daacs_valid_complete_mice$retained, mice_rf_predictions),
 #   confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
 #   confusion_matrix(daacs_valid$retained, medley_rf_predictions == 2)
 # ) |>  print(row.names = FALSE)

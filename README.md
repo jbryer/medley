@@ -14,12 +14,46 @@ status](https://github.com/jbryer/medley/workflows/R-CMD-check/badge.svg)](https
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
 **Website:** <https://jbryer.github.io/medley/>
 
-The goal of medley is to provide a framework for training predictive
-models where there is a systematic pattern of missing data. For example,
-situations where baseline data may be available but as time progresses
-additional variables may be available. This framework allows for
-training models for different combinations of data availability allowing
-for single function call to get predictions on new data.
+Most predictive modeling strategies require there to be no missing data
+for model estimation. When there is missing data, there are generally
+two strategies for working with missing data: 1.) exclude the variables
+(columns) or observations (rows) where there is missing data; or 2.)
+impute the missing data. However, data is often missing in systematic
+ways. Excluding data from training is ignoring potentially predictive
+information and for many imputation procedures the missing completely at
+random (MCAR) assumption is violated.
+
+The `medley` package implements a solution to modeling when there are
+systematic patterns of missingness. A working example of predicting
+student retention from a larger study of the Diagnostic Assessment and
+Achievement of College Skills (DAACS) will be explored. In this study,
+demographic data was collected at enrollment from all students and then
+students completed diagnostic assessments in self-regulated learning
+(SRL), writing, mathematics, and reading during their first few weeks of
+the semester. Although all students were expected to complete DAACS,
+there were no consequence and therefore a large percentage of student
+completed none or only some of the assessments. The resulting dataset
+has three predominate response patterns: 1.) students who completed all
+four assessments, 2.) students who completed only the SRL assessment,
+and 3). students who did not complete any of the assessments.
+
+The goal of the `medley` algorithm is to take advantage of missing data
+patterns. For this example, the medley algorithm trained three
+predictive models: 1.) demographics plus all four assessments, 2.)
+demographics plus SRL assessment, and 3.) demographics only. For both
+training and prediction, the model used for each student is based upon
+what data is available. That is, if a student only completed SRL, model
+2 would be used. The `medley` algorithm can be used with most
+statistical models. For this study, both logistic regression and random
+forest are used. The accuracy of the `medley` algorithm was 3.5% better
+than using only the complete data and 3.1% better than using a dataset
+where missing data was imputed using the `mice` package.
+
+The `medley` package provides an approach for predictive modeling using
+the same training and prediction framework R users are accustomed to
+using. There are numerous parameters that can be modified including what
+underlying statistical models are used for training. Additional
+diagnostic functions are available to explore missing data patterns.
 
 ## Installation
 
