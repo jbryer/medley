@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 library(badger)
 ```
 
-# medley: Predictive Modeling with Missing Data
+# <a href='https://github.com/jbryer/medley'><img src='man/figures/medley.png' align="right" width="120" /></a> medley: Predictive Modeling with Missing Data
 
 <!-- badges: start -->
 `r badge_cran_release("medley", "orange")`

@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# medley: Predictive Modeling with Missing Data
+# <a href='https://github.com/jbryer/medley'><img src='man/figures/medley.png' align="right" width="120" /></a> medley: Predictive Modeling with Missing Data
 
 <!-- badges: start -->
 
