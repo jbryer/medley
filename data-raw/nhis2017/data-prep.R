@@ -68,9 +68,9 @@ convert_to_factor <- apply(nhis, 2, FUN = function(x) { length(unique(x)) <= 5})
 table(convert_to_factor)
 nhis[,convert_to_factor] <- lapply(nhis[,convert_to_factor], as.factor)
 
-usethis::use_data(nhis, overwrite = TRUE)
-# save(nhis, file = 'data/nhis.rda')
-# tools::resaveRdaFiles('data/')
+# usethis::use_data(nhis, overwrite = TRUE)
+save(nhis, file = 'data/nhis.rda')
+tools::resaveRdaFiles('data/')
 
 
 ##### Dependent variables
