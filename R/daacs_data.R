@@ -29,4 +29,5 @@
 #' }
 #' @docType data
 #' @source https://daacs.net
-"daacs"
+#' @name daacs
+NULL

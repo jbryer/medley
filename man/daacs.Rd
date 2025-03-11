@@ -27,9 +27,6 @@ A data frame with 5,154 observations of 14 variables.
 \source{
 https://daacs.net
 }
-\usage{
-daacs
-}
 \description{
 This is data part of a larger randomized control trial designed to test
 the effect of DAACS on student success. These data are from the treatment
@@ -41,4 +38,3 @@ for a large proportion of the students.
 \details{
 For more information about DAACS, see https://daacs.net.
 }
-\keyword{datasets}

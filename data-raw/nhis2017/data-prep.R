@@ -72,7 +72,7 @@ nhis[,convert_to_factor] <- lapply(nhis[,convert_to_factor], as.factor)
 save(nhis, file = 'data/nhis.rda')
 tools::resaveRdaFiles('data/')
 
-
+####################################################################################################
 ##### Dependent variables
 summary(nhis$ERNYR_P) # From person file (exclude INCGRP4, INCGRP5 from analysis)
 table(nhis$ERNYR_P, useNA = 'ifany')
