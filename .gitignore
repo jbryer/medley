@@ -2,7 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-data-raw/
+data-raw/daacs/*.rda
+data-raw/nhis2017/*.pdf
+data-raw/nhis2017/*.csv
 inst/doc
 docs
 articles/

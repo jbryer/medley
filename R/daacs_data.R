@@ -27,5 +27,6 @@
 #'     \item{military}{whether the student is active in the military}
 #'     \item{age}{the age of the student at the time of enrollment}
 #' }
+#' @docType data
 #' @source https://daacs.net
 "daacs"
