@@ -1,20 +1,36 @@
 #' Calculate a confusion matrix
 #'
-#' @param observed vector of observed values.
-#' @param predicted vector of predicted values.
+#' @param observed vector of observed values. The vector should either be a numeric vector of 0s
+#'        and 1s or logical.
+#' @param predicted vector of predicted values. The vector should either be a numeric vector of 0s
+#'        and 1s or logical.
+#' @param label_true label for TRUE values.
+#' @param label_false label for FALSE values
 #' @return a data.frame of the confusion matrix.
 #' @export
 #' @examples
 #' observed <- c(rep(FALSE, 10), rep(TRUE, 2))
 #' predicted <- rep(TRUE, 12)
-#' confusion_matrix(observed, predicted)
-confusion_matrix <- function(observed, predicted) {
+#' confusion_matrix(observed, predicted, label_true = 'Success', label_false = 'Failure')
+confusion_matrix <- function(observed, predicted, label_false = 'FALSE', label_true = 'TRUE') {
 	if(length(unique(predicted)) > 2) {
 		warning('Looks like predicted probabilities were provided. Dichotomizing at 0.5.')
 		predicted <- predicted > 0.5
 	}
-	observed <- factor(as.logical(observed), levels = c(FALSE, TRUE), labels = c('TRUE', 'FALSE'))
-	predicted <- factor(as.logical(predicted), levels = c(FALSE, TRUE), labels = c('TRUE', 'FALSE'))
+	if(!is.logical(observed)) {
+		observed <- as.logical(observed)
+		if(all(is.na(observed))) {
+			stop('observed vector could not be converted to a logical vector.')
+		}
+	}
+	if(!is.logical(predicted)) {
+		predicted <- as.logical(predicted)
+		if(all(is.na(predicted))) {
+			stop('predicted vector could not be converted to a logical vector.')
+		}
+	}
+	observed <- factor(observed, levels = c(FALSE, TRUE), labels = c(label_false, label_true))
+	predicted <- factor(predicted, levels = c(FALSE, TRUE), labels = c(label_false, label_true))
 	ct <- table(observed, predicted)
 	pt <- prop.table(ct)
 	result <- cbind(as.data.frame(ct), percent = as.data.frame(pt)[,3])

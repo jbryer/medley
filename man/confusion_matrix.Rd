@@ -6,16 +6,27 @@
 \alias{print.confusionmatrix}
 \title{Calculate a confusion matrix}
 \usage{
-confusion_matrix(observed, predicted)
+confusion_matrix(
+  observed,
+  predicted,
+  label_false = "FALSE",
+  label_true = "TRUE"
+)
 
 \method{as.data.frame}{confusionmatrix}(x, row.names = NULL, optional = FALSE, digits = 2, ...)
 
 \method{print}{confusionmatrix}(x, digits = 2, ...)
 }
 \arguments{
-\item{observed}{vector of observed values.}
+\item{observed}{vector of observed values. The vector should either be a numeric vector of 0s
+and 1s or logical.}
 
-\item{predicted}{vector of predicted values.}
+\item{predicted}{vector of predicted values. The vector should either be a numeric vector of 0s
+and 1s or logical.}
+
+\item{label_false}{label for FALSE values}
+
+\item{label_true}{label for TRUE values.}
 
 \item{x}{the result of [confusion_matrix()].}
 
@@ -36,5 +47,5 @@ Calculate a confusion matrix
 \examples{
 observed <- c(rep(FALSE, 10), rep(TRUE, 2))
 predicted <- rep(TRUE, 12)
-confusion_matrix(observed, predicted)
+confusion_matrix(observed, predicted, label_true = 'Success', label_false = 'Failure')
 }
