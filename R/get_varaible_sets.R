@@ -16,6 +16,7 @@ get_variable_sets <- function(data, formula, min_set_size = 0.1) {
 	if(n_missing_by_var[1] != 0) {
 		stop('Missing values in the dependent variable is not supported..')
 	}
+	n_missing_by_var <- n_missing_by_var[-1]
 
 	missing_vars <- names(n_missing_by_var[n_missing_by_var > 0])
 	complete_vars <- names(n_missing_by_var[n_missing_by_var == 0])
@@ -46,7 +47,14 @@ get_variable_sets <- function(data, formula, min_set_size = 0.1) {
 		) |>
 			as.data.frame(row.names = complete_vars)
 		names(x) <- names(sets)
-		sets <- rbind(sets, x)
+		if(any(apply(sets, 2, sum) == 0)) {
+			# one of the sets has has no variables so adding the base would be redundant
+			sets <- rbind(sets, x)
+		} else {
+			sets <- rbind(sets, x)
+			sets$base <- 0
+			sets[complete_vars,]$base <- 1
+		}
 	}
 
 	if(ncol(sets) == 0) { # Not sure the minimum number of sets

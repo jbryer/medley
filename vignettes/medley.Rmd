@@ -52,7 +52,7 @@ To begin we first explore the patterns of missing data. Figure \@ref(fig:upset) 
 
 ```{r upset, fig.cap='UpSet plot of the missing data', eval=TRUE, fig.height=7, fig.width = 6.5}
 shadow_matrix <- as.data.frame(!is.na(daacs))
-ComplexHeatmap::make_comb_mat(shadow_matrix) |> ComplexHeatmap::UpSet()
+ComplexHeatmap::make_comb_mat(shadow_matrix) |> ComplexHeatmap::UpSet(right_annotation = NULL)
 ```
 
 ## Data Preparation
@@ -74,11 +74,9 @@ There are generally two choices when estimating models when there is missing dat
 In the DAACS data set as depicted in Figure \@ref(fig:upset) the demographics variables were observed for all students. To start we train a logistic regression model on the training data.
 
 ```{r demographics-model-medley, include=FALSE, eval=FALSE}
-lr_medley_base_out <- medley_train(data = daacs_train,
-                                   formula = retained ~ income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age,
-                                   family = binomial(link = 'logit') )
-
-
+# lr_medley_base_out <- medley_train(data = daacs_train,
+#                                    formula = retained ~ income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age,
+#                                    family = binomial(link = 'logit') )
 ```
 
 ```{r demographics-model}

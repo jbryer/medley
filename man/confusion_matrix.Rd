@@ -33,3 +33,8 @@ a data.frame of the confusion matrix.
 \description{
 Calculate a confusion matrix
 }
+\examples{
+observed <- c(rep(FALSE, 10), rep(TRUE, 2))
+predicted <- rep(TRUE, 12)
+confusion_matrix(observed, predicted)
+}

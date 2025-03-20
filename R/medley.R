@@ -37,9 +37,9 @@ medley_train <- function(
 
 	results <- list()
 	results$models <- list()
-	results$formulas <- var_sets
 	results$data <- data
 	results$n_models <- length(var_sets)
+	results$messages <- character()
 
 	obs_membership <- matrix(FALSE,
 							 ncol = length(var_sets),
@@ -61,15 +61,49 @@ medley_train <- function(
 
 	obs_no_model <- apply(obs_membership, 1, FUN = function(x) { !any(x) }) |> sum()
 	if(obs_no_model > 0) {
-		warning(paste0('There are ', obs_no_model, ' (',
-					   round(100 * obs_no_model / nrow(data), digits = 2),
-					   '%) observations that do not have enough data for any model.'))
+		results$messages <- c(
+			results$messages,
+			paste0('There are ', obs_no_model, ' (',
+				   round(100 * obs_no_model / nrow(data), digits = 2),
+				   '%) observations that do not have enough data for any model.')
+		)
 	}
 
 	for(i in seq_len(length(var_sets))) {
 		f <- var_sets[[i]]
 		rows <- obs_membership[,i,drop=TRUE]
-		results$models[[i]] <- method(formula = f, data = data[rows,])
+		model_data <- data[rows, all.vars(f)] |> as.data.frame() # In case it is a tibble
+		for(v in all.vars(f)) {
+			if(is.factor(model_data[,v])) {
+				if(!all(levels(model_data[,v]) %in% unique(model_data[,v]))) {
+					if(is.ordered(model_data[,v])) {
+						stop(paste0(v, ' variable has unused levels in model ', i,
+									'. May want to consider converting to an integer.'))
+					}
+					results$messages <- c(
+						results$messages,
+						paste0(v, ' variable recoded to remove unused contrasts for model ', i)
+					)
+					model_data[,v] <- model_data[,v] |> as.character() |> as.factor()
+				}
+				if(length(unique(model_data[,v])) == 1) {
+					results$messages <- c(
+						results$messages,
+						paste0(v, ' variable has only one contrast. Removing from model ', i)
+					)
+					vars <- all.vars(f)
+					vars <- vars[vars != v]
+					f <- as.formula(paste0(vars[1], ' ~ ', paste0(vars[-1], collapse = ' + ')))
+					var_sets[[i]] <- f
+				}
+			}
+		}
+		results$models[[i]] <- method(formula = f, data = model_data, ...)
+	}
+
+	results$formulas <- var_sets
+	if(length(results$messages) > 0) {
+		warning('There were warnings generated during training. See messages on the returned object.')
 	}
 
 	class(results) <- 'medley'
@@ -82,11 +116,12 @@ medley_train <- function(
 #' @export
 summary.medley <- function(object, ...) {
 	# huxtable::huxreg(object$models) |> huxtable::print_screen()
+	dep_var <- all.vars(object$formulas[[1]])[1]
 	model_sum <- data.frame(
 		Model = seq_len(object$n_models),
 		n = apply(object$model_observation, 2, sum),
 		Success = apply(object$model_observation, 2, FUN = function(x) {
-			object$data[x,]$retained |> mean() * 100
+			object$data[x,dep_var] |> mean() * 100
 		}),
 		Formula = as.character(object$formulas),
 		check.names = FALSE

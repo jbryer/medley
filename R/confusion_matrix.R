@@ -4,11 +4,17 @@
 #' @param predicted vector of predicted values.
 #' @return a data.frame of the confusion matrix.
 #' @export
+#' @examples
+#' observed <- c(rep(FALSE, 10), rep(TRUE, 2))
+#' predicted <- rep(TRUE, 12)
+#' confusion_matrix(observed, predicted)
 confusion_matrix <- function(observed, predicted) {
 	if(length(unique(predicted)) > 2) {
 		warning('Looks like predicted probabilities were provided. Dichotomizing at 0.5.')
 		predicted <- predicted > 0.5
 	}
+	observed <- factor(as.logical(observed), levels = c(FALSE, TRUE), labels = c('TRUE', 'FALSE'))
+	predicted <- factor(as.logical(predicted), levels = c(FALSE, TRUE), labels = c('TRUE', 'FALSE'))
 	ct <- table(observed, predicted)
 	pt <- prop.table(ct)
 	result <- cbind(as.data.frame(ct), percent = as.data.frame(pt)[,3])
