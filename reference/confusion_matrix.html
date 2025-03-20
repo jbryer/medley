@@ -85,6 +85,18 @@
     <p>a data.frame of the confusion matrix.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">observed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="fl">10</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">predicted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="fl">12</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">confusion_matrix</span><span class="op">(</span><span class="va">observed</span>, <span class="va">predicted</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            predicted            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   observed      TRUE       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       TRUE 0 (0.00%) 10 (83.33%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      FALSE 0 (0.00%)  2 (16.67%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Accuracy: 16.67%</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
