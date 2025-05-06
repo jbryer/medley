@@ -145,7 +145,8 @@ for the validation dataset. There is some separation between public and
 private school students, but the densities are clearly centered to the
 right side of the range.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Public <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, Prediction <span class="op">=</span> <span class="va">pisa_predictions</span><span class="op">)</span>, </span>
+<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Public <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, </span>
+<span>                  Prediction <span class="op">=</span> <span class="va">pisa_predictions</span><span class="op">)</span>, </span>
 <span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">Prediction</span>, color <span class="op">=</span> <span class="va">Public</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_density</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="downsampling_files/figure-html/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;"></p>
@@ -153,7 +154,8 @@ right side of the range.</p>
 curve along with a plot of the accuracy, sensitivity, and
 specificity.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/calculate_roc.html">calculate_roc</a></span><span class="op">(</span>predictions <span class="op">=</span> <span class="va">pisa_predictions</span>, observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/calculate_roc.html">calculate_roc</a></span><span class="op">(</span>predictions <span class="op">=</span> <span class="va">pisa_predictions</span>, </span>
+<span>              observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="downsampling_files/figure-html/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;"></p>
 <p>The confusion matrix below, splitting at 0.5, indicates that this
 model is no better than the null model (i.e percent public school
@@ -223,7 +225,9 @@ observations. Given there are 3925 observations in our training set, the
 predictions. Each column corresponds to the predicted value for each of
 the 7 models.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pisa_predictions_ds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">pisa_ds_out</span>, newdata <span class="op">=</span> <span class="va">pisa_valid</span>, type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pisa_predictions_ds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">pisa_ds_out</span>,</span>
+<span>                               newdata <span class="op">=</span> <span class="va">pisa_valid</span>, </span>
+<span>                               type <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pisa_predictions_ds</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      model1    model2    model3    model4    model5    model6    model7</span></span>
 <span><span class="co">#&gt; 1 0.8511828 0.7437341 0.8921605 0.8424369 0.7347052 0.8697531 0.6928875</span></span>
@@ -240,7 +244,8 @@ more like the distributions we expect when we have balanced data even
 though we did use all the observations to get these predicted
 probabilities.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Public <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, Prediction <span class="op">=</span> <span class="va">pisa_predictions_ds2</span><span class="op">)</span>, </span>
+<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Public <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, </span>
+<span>                  Prediction <span class="op">=</span> <span class="va">pisa_predictions_ds2</span><span class="op">)</span>, </span>
 <span>       <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">Prediction</span>, color <span class="op">=</span> <span class="va">Public</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_density</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="downsampling_files/figure-html/unnamed-chunk-14-1.png" width="90%" style="display: block; margin: auto;"></p>
@@ -249,11 +254,13 @@ the issue of shrinking and off centered fitted values, the model
 performance metrics provided below suggest that it did not improve the
 overall performance of the model predictions.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_roc.html">calculate_roc</a></span><span class="op">(</span>predictions <span class="op">=</span> <span class="va">pisa_predictions_ds2</span>, observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">roc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_roc.html">calculate_roc</a></span><span class="op">(</span>predictions <span class="op">=</span> <span class="va">pisa_predictions_ds2</span>, </span>
+<span>                     observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">roc</span><span class="op">)</span></span></code></pre></div>
 <p><img src="downsampling_files/figure-html/unnamed-chunk-15-1.png" width="90%" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, predicted <span class="op">=</span> <span class="va">pisa_predictions_ds2</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/confusion_matrix.html">confusion_matrix</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="va">pisa_valid</span><span class="op">$</span><span class="va">Public</span>, </span>
+<span>                 predicted <span class="op">=</span> <span class="va">pisa_predictions_ds2</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt;               predicted              </span></span>
 <span><span class="co">#&gt;   observed        FALSE          TRUE</span></span>
 <span><span class="co">#&gt;      FALSE   45 (3.44%)    41 (3.13%)</span></span>
