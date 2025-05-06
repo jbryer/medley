@@ -103,6 +103,16 @@ confusion_matrix(observed = daacs_valid$retained,
 
 The overall accuracy using only the demographic variables is `r round(100 * accuracy(daacs_valid$retained, lr_predictions > 0.5), digits = 2)`%
 
+Note that for random forests we used `type = 'response'` which provides the predicted class. If you wish to get predicted probabilities instead use `type = 'prob'` (also random forest returns a two column of predicted values, column 2 corresponds to the predicted probability of the "success" class). This is useful if you wish to plot a receiver operating characteristic (ROC) curve as shown in the figure below.
+
+```{r, fig.width=7.5, fig.height=3, out.width='90%', fig.align='center'}
+calculate_roc(
+	predictions = predict(rf_out, newdata = daacs_valid, type = 'prob')[,2],
+	observed = daacs_valid$retained
+) |> plot()
+```
+
+
 ## Mean Imputation
 
 ```{r}

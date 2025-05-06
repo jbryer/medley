@@ -31,10 +31,13 @@ confusion_matrix <- function(observed, predicted, label_false = 'FALSE', label_t
 	}
 	observed <- factor(observed, levels = c(FALSE, TRUE), labels = c(label_false, label_true))
 	predicted <- factor(predicted, levels = c(FALSE, TRUE), labels = c(label_false, label_true))
-	ct <- table(observed, predicted)
+	ct <- table(predicted, observed)
 	pt <- prop.table(ct)
 	result <- cbind(as.data.frame(ct), percent = as.data.frame(pt)[,3])
 	attr(result, 'accuracy') <- pt[1,1] + pt[2,2]
+	attr(result, 'specificity') <- result[result$predicted == 'TRUE' & result$observed == 'TRUE',]$Freq / sum(result[result$observed == 'TRUE',]$Freq)
+	attr(result, 'sensitivity') <- result[result$predicted == 'FALSE' & result$observed == 'FALSE',]$Freq / sum(result[result$observed == 'FALSE',]$Freq)
+	# attr(result, 'kappa') <- base::kappa(ct)[[1]]
 	class(result) <- c('confusionmatrix', 'data.frame')
 	return(result)
 }
@@ -82,21 +85,61 @@ print.confusionmatrix <- function(x, digits = 2, ...) {
 	names(x1) <- c('', '', 'predicted', '')
 	x1[1:2, 1] <- ''
 	print(x1, row.names = FALSE, na.print = '')
-	cat(paste0('Accuracy: ', round(100 * (x2[1,2] + x2[2,3]), digits = digits), '%'))
+	cat(paste0('Accuracy: ', round(100 * attr(x, 'accuracy'), digits = digits), '%\n'))
+	cat(paste0('Sensitivity: ', round(100 * attr(x, 'sensitivity'), digits = digits), '%\n'))
+	cat(paste0('Specificity: ', round(100 * attr(x, 'specificity'), digits = digits), '%\n'))
+	# k <- attr(x, 'kappa')
+	# if(is.list(k)) {
+	# 	cat(paste0('Kappa: ', round(k[[1]], digits = digits), '\n'))
+	# } else {
+	# 	cat(paste0('Kappa: ', round(k, digits = digits), '\n'))
+	# }
 }
 
 #' Calculate the accuracy rate.
 #'
-#' This function provides the overall accuracy rate for the two vectors.
+#' This function provides the overall accuracy rate for the two vectors. This is the sum of the
+#' true positive and true negative values.
 #'
+#' @rdname metrics
 #' @param observed vector of observed values.
 #' @param predicted vector of predicted values.
 #' @return the accuracy as a numeric value.
 #' @export
 accuracy <- function(observed, predicted) {
-	tab_out <- table(observed, predicted) |> prop.table()
-	tab_out[1,1] + tab_out[2,2]
+	tab_out <- confusion_matrix(observed, predicted)
+	class(tab_out) <- 'data.frame'
+	sum(tab_out[tab_out$observed == tab_out$predicted,]$percent)
 }
+
+#' Calculate the sensitivity.
+#'
+#' sum(True positive) / sum(Condition positive)
+#'
+#' @rdname metrics
+#' @param observed vector of observed values.
+#' @param predicted vector of predicted values.
+#' @export
+sensitivity <- function(observed, predicted) {
+	tab_out <- confusion_matrix(observed, predicted)
+	class(tab_out) <- 'data.frame'
+	tab_out[tab_out$predicted == 'FALSE' & tab_out$observed == 'FALSE',]$Freq / sum(tab_out[tab_out$observed == 'FALSE',]$Freq)
+}
+
+#' Calculate the specificity.
+#'
+#' sum(True negative) / sum(Condition negative)
+#'
+#' @rdname metrics
+#' @param observed vector of observed values.
+#' @param predicted vector of predicted values.
+#' @export
+specificity <- function(observed, predicted) {
+	tab_out <- confusion_matrix(observed, predicted)
+	class(tab_out) <- 'data.frame'
+	tab_out[tab_out$predicted == 'TRUE' & tab_out$observed == 'TRUE',]$Freq / sum(tab_out[tab_out$observed == 'TRUE',]$Freq)
+}
+
 
 #' Combine multiple confusion matrices into a single table.
 #'

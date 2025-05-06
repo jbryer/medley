@@ -1,8 +1,8 @@
 Type: Package
 Package: medley
 Title: Predictive Modeling with Missing Data
-Version: 0.9.1
-Date: 2025-03-10
+Version: 0.9.2
+Date: 2025-04-06
 Authors@R: 
     person("Jason", "Bryer", , "jason@bryer.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-2454-0402"))
@@ -29,6 +29,9 @@ Suggests:
     randomForest,
     rmarkdown,
     vtable
+Enhances: 
+    multilevelPSA,
+    splitstackshape
 VignetteBuilder: 
     knitr
 biocViews:

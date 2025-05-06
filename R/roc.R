@@ -1,3 +1,5 @@
+globalVariables(c("value", "variable"))
+
 #' Calculate the statistics for receiver operating characteristic curve
 #'
 #' This function was adapted from Raffel (https://github.com/joyofdata):
@@ -35,11 +37,23 @@ calculate_roc <- function(predictions,
 			predictions < threshold & observed == 0) / length(predictions)
 	}
 
+	sensitivity <- function(threshold) {
+		sum(predictions >= threshold & observed == 1) /
+			sum(observed == 1)
+	}
+
+	specificity <- function(threshold) {
+		sum(predictions < threshold & observed == 0) /
+			sum(observed == 0)
+	}
+
 	roc <- data.frame(threshold = seq(0, 1, length.out = n), tpr = NA, fpr = NA)
 	roc$tpr <- sapply(roc$threshold, function(th) tpr(th))
 	roc$fpr <- sapply(roc$threshold, function(th) fpr(th))
 	roc$cost <- sapply(roc$threshold, function(th) cost(th, cost_of_fp, cost_of_fn))
 	roc$accuracy <- sapply(roc$threshold, function(th) accuracy(th))
+	roc$sensitivity <- sapply(roc$threshold, function(th) sensitivity(th))
+	roc$specificity <- sapply(roc$threshold, function(th) specificity(th))
 
 	class(roc) <- c('roc', 'data.frame')
 	attr(roc, 'auc') <- abs(sum(diff(roc$fpr) * (head(roc$tpr,-1) + tail(roc$tpr,-1)))/2)
@@ -79,13 +93,14 @@ utils::globalVariables(c("fpr", "tpr", "threshold", "cost"))
 #' @rdname calculate_roc
 #' @param x result of [calculate_roc()].
 #' @param curve values can be cost, accuracy, or NULL.
+#' @param legend.position position of the legend for teh accuracy curve plot.
 #' @param ... currently unused.
 #' @return a ggplot2 expression.
 #' @import ggplot2
 #' @method plot roc
 #' @importFrom gridExtra grid.arrange
 #' @export
-plot.roc <- function(x, curve = 'accuracy', ...) {
+plot.roc <- function(x, curve = 'accuracy', legend.position = c(1, 0.2), ...) {
 	roc <- x
 	idx_threshold <- which(roc$threshold == attr(roc, 'threshold'))
 
@@ -112,9 +127,18 @@ plot.roc <- function(x, curve = 'accuracy', ...) {
 	} else if(curve == 'accuracy') {
 		threshold.label <- paste0('Threshold with maximum accuracy = ',
 								  round(attr(roc, 'threshold'), digits = 3))
-		p2 <- ggplot(roc, aes(x = threshold, y = accuracy)) +
+
+		metrics <- reshape2::melt(roc[,c('threshold', 'accuracy', 'sensitivity', 'specificity')],
+								  measure.vars = c('accuracy', 'sensitivity', 'specificity'))
+
+		p2 <- ggplot(metrics, aes(x = threshold, y = value, color = variable)) +
 			geom_path() +
-			geom_vline(xintercept = attr(roc, 'threshold')) +
+			# geom_vline(xintercept = attr(roc, 'threshold')) +
+			scale_color_brewer('Metric', type = 'qual', palette = 2) +
+			theme(legend.position.inside = legend.position,
+				  legend.title = element_blank(),
+				  # legend.position = "bottom",
+				  legend.justification = "right") +
 			ylim(c(0,1)) + xlim(c(0,1)) +
 			xlab('Threshold') +
 			ylab('Accuracy') +

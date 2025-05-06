@@ -1,8 +1,10 @@
 usethis::use_tidy_description()
 devtools::document()
 devtools::install()
+# devtools::install(quick = TRUE)
 devtools::check(cran = TRUE)
 
+tools::resaveRdaFiles("data/")
 tools::checkRdaFiles("data/")
 
 ##### pkgdown site

@@ -1,0 +1,215 @@
+---
+title: "Downsampling for Predictive Modeling"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Downsampling for Predictive Modeling}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+set.seed(2112)
+library(ggplot2)
+ggplot2::theme_set(ggplot2::theme_minimal())
+```
+
+
+One of the challenges in predictive modeling occurs when the dependent variable is imbalanced (i.e. the ratio of one class to the other is high, generally greater than 80-to-20). Several strategies have been proposed to address the imbalance including upsampling and downsampling. Upsampling involves duplicating data from the smaller class to better match the number of observations from the larger class. The disadvantage of upsampling is that new data is being created that could potentially cause overfitting. Additionally, by artificially increasing the sample size standard errors will also be artificially decreased. Downsampling involves randomly selecting from the larger class to achieve better balance. The disadvantage of downsampling is that some data, and sometimes a lot of data, is excluded from the model.
+
+This paper introduces a procedure that downsamples while using all available data by training multiple models. For example, consider a dataset with 1,000 observations, 900 are of class A and 100 are of class B. Assuming we wish to have perfect balance between A and B, we would randomly assign the 900 class A observations to one of nine models. We can then pool the predictions across the nine models.
+
+## Working Example
+
+```{r setup}
+library(medley)
+data('pisa', package = 'medley')
+data('pisa_variables', package = 'medley')
+```
+
+The [Programme of International Student Assessment](https://www.oecd.org/en/about/programmes/pisa.html) (PISA) is international study conducted by the [Organisation for Economic Co-operation and Development](https://www.oecd.org/en.html) (OECD) every three years. It assesses 15-year-old students in mathematics, science, and reading while collecting information about the students and their schools. The `pisa` dataset included in the `medley` package comes from the 2009 administration and is used to demonstrate predicting private versus public school attendance. There are `r prettyNum(nrow(pisa), big.mark=',')` observations across `r ncol(pisa)` variables with `r round(100 * sum(pisa$Public) / nrow(pisa), digits = 1)`% public school students and `r round(100 * sum(!pisa$Public) / nrow(pisa), digits = 1)`% private school students.
+
+To begin, we will split the data into a training and validation set using the [`splitstackshape::stratified()`](https://search.r-project.org/CRAN/refmans/splitstackshape/html/stratified.html) function to ensure that the ratio of public-to-private school students is the same in both datasets. 
+
+```{r}
+pisa_formu <- Public ~ .
+names(pisa) <- pisa_variables[names(pisa)]
+pisa_splits <- splitstackshape::stratified(
+	pisa, group = "Public", size = 0.75, bothSets = TRUE)
+pisa_train <- pisa_splits[[1]] |> as.data.frame()
+pisa_valid <- pisa_splits[[2]] |> as.data.frame()
+```
+
+```{r}
+table(pisa$Public, useNA = 'ifany') |> print() |> prop.table()
+table(pisa_train$Public, useNA = 'ifany') |> print() |> prop.table()
+table(pisa_valid$Public, useNA = 'ifany') |> print() |> prop.table()
+```
+
+We can estimate a logistic regression model and get the predicted probabilities for the validation dataset.
+
+```{r}
+pisa_lr_out <- glm(pisa_formu, data = pisa_train, family = binomial(link = 'logit'))
+pisa_predictions <- predict(pisa_lr_out, newdata = pisa_valid, type = 'response')
+```
+
+The figure below shows the distribution of predicted probabilities for the validation dataset. There is some separation between public and private school students, but the densities are clearly centered to the right side of the range.
+
+```{r, fig.width=7.5, fig.height=3, out.width='90%', fig.align='center'}
+ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions), 
+       aes(x = Prediction, color = Public)) +
+  geom_density()
+```
+
+The figure below provides a receiver operator characteristic (ROC) curve along with a plot of the accuracy, sensitivity, and specificity.
+
+```{r, fig.width=7.5, fig.height=4, out.width='90%', fig.align='center'}
+calculate_roc(predictions = pisa_predictions, observed = pisa_valid$Public) |> plot()
+```
+
+The confusion matrix below, splitting at 0.5, indicates that this model is no better than the null model (i.e percent public school students is `r round(100 * sum(pisa_valid$Public) / nrow(pisa_valid), digits = 1)`%). Of course we could adjust that cut value to optimize either the *specificity* or *sensitivity*.
+
+```{r}
+confusion_matrix(observed = pisa_valid$Public, 
+				 predicted = pisa_predictions > 0.5)
+```
+
+```{r, include=FALSE}
+# caret::confusionMatrix(data = factor(pisa_predictions > 0.5), reference = factor(pisa_valid$Public))
+```
+
+## Shrinking Fitted Values
+
+It turns out that the range of fitted values from logistic regression will shrink as the amount of imbalance in the dependent variable increases. I first encountered this issue when estimating propensity scores for [my dissertation](https://github.com/jbryer/dissertation?tab=readme-ov-file) in a study of charter versus traditional public school students. In that study using the [National Assessment of Educational Progress](https://nces.ed.gov/nationsreportcard/) (NAEP) approximately 3% of students attended a charter school. In that study, the range of propensity scores were severely constrained. To explore why, the [multilevel::psrange()](https://jbryer.github.io/multilevelPSA/reference/psrange.html) function was developed The result of this function is the figure below. Starting at the bottom, `r sum(!pisa$Public)` public school students were randomly selected so that the logistic regression could be estimated where there is perfect balance in the dependent variable. As we move up we increase the ratio from 1:1 to 1:13. For each ratio, 20 random samples are drawn, logistic regression model estimated, and the minimum and maximum fitted values (i.e. predicted probabilities) are recorded (they are represented by the black dots and green bars). The distributions across all models are also included. 
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE, cache=TRUE, echo=FALSE, fig.width=7.5, fig.height=4, out.width='90%', fig.align='center'}
+n_private <- sum(!pisa$Public)
+n_public <- sum(pisa$Public)
+psranges2 <- multilevelPSA::psrange(pisa, 
+					 !pisa$Public,
+					 Public ~ .,
+					 samples = seq(n_private, n_public, by = 2 * n_private),
+					 nboot = 20)
+plot(psranges2) + theme(legend.position = 'none') +
+	xlab('Fitted Values')
+```
+
+Plotting just the ranges along with the mean of the fitted values for public (blue) and private (green) school students shows that once the ratio is greater than 3-to-1 the mean of the fitted values for the zero class (private schools in this example) is greater than 0.5.
+
+```{r echo=FALSE, fig.align='center', fig.height=4, fig.width=7.5, message=FALSE, warning=FALSE, include=TRUE, out.width='90%', results='hide'}
+pisa_public <- pisa[pisa$Public,]
+pisa_private <- pisa[!pisa$Public,]
+
+ratio <- floor(nrow(pisa_public) / nrow(pisa_private))
+ranges <- data.frame(ratio = integer(),
+					 min = numeric(),
+					 max = numeric(),
+					 median = numeric(),
+					 mean = numeric(),
+					 median_public = numeric(),
+					 mean_public = numeric(),
+					 median_private = numeric(),
+					 mean_private = numeric())
+for(i in 1:ratio) {
+	df <- rbind(pisa_private, pisa_public[sample(i * nrow(pisa_private)),])
+	lm_out <- glm(pisa_formu, data = df, family = binomial(link = 'logit'))
+	fitted <- predict(lm_out, type = 'response')
+	ranges[i,]$ratio <- i
+	ranges[i,]$min <- min(fitted)
+	ranges[i,]$max <- max(fitted)
+	ranges[i,]$median <- median(fitted)
+	ranges[i,]$mean <- mean(fitted)
+	ranges[i,]$median_public <- median(fitted[df$Public])
+	ranges[i,]$mean_public <- mean(fitted[df$Public])
+	ranges[i,]$median_private <- median(fitted[!df$Public])
+	ranges[i,]$mean_private <- mean(fitted[!df$Public])
+}
+ggplot(ranges, aes(x = min, xend = max, y = ratio)) +
+	geom_segment(alpha = 0.75) +
+	geom_point(size = 3) +
+	geom_point(aes(x = max), size = 3) +
+	geom_point(aes(x = mean_public), color = '#377eb8', size = 3) +
+	geom_point(aes(x = mean_private), color = '#4daf4a', size = 3) +
+	# geom_point(aes(x = median), color = 'blue', size = 3) +
+	# geom_point(aes(x = mean), color = 'maroon', size = 3) +
+	scale_y_continuous(breaks = 1:ratio) +
+	ylab('Ratio of Public to Private') +
+	xlab('Fitted values\n(blue = mean public; green = mean private)')
+```
+
+
+## Downsampling
+
+As discussed above one of the key disadvantages of downsampling is that in situations where there is significant imbalance we are excluding a lot of data from analysis. The `downsample()` function will first determine how many models need to be estimated such that each observation from the larger class is used exactly once. For this example we are using a public-to-private student ratio of 2-to-1 so that for each model estimated there are `r sum(!pisa_train$Public)` private and `r 2 * sum(!pisa_train$Public)` public student observations. Given there are `r nrow(pisa_train)` observations in our training set, the `dowmsample()` function will estimate `r floor(nrow(pisa_train) / (2 * sum(!pisa_train$Public)))` models.
+
+
+```{r}
+pisa_ds_out <- downsample(
+  formu = pisa_formu,
+  data = pisa_train,
+  model_fun = glm,
+  ratio = 2,
+  family = binomial(link = 'logit'))
+length(pisa_ds_out)
+```
+
+We can use the `predict()` function to get a data frame of predictions. Each column corresponds to the predicted value for each of the `r floor(nrow(pisa_train) / (2 * sum(!pisa_train$Public)))` models.
+
+```{r}
+pisa_predictions_ds <- predict(pisa_ds_out, newdata = pisa_valid, type = 'response')
+head(pisa_predictions_ds)
+```
+
+We can average the predictions to get a single vector.
+
+```{r}
+pisa_predictions_ds2 <- pisa_predictions_ds |> apply(1, mean)
+```
+
+The density distributions are provided below. These distributions are more like the distributions we expect when we have balanced data even though we did use all the observations to get these predicted probabilities.
+
+```{r, fig.width=7.5, fig.height=3, out.width='90%', fig.align='center'}
+ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions_ds2), 
+       aes(x = Prediction, color = Public)) +
+  geom_density()
+```
+
+Although the `downsample()` function appears to address the issue of shrinking and off centered fitted values, the model performance metrics provided below suggest that it did not improve the overall performance of the model predictions.
+
+```{r, fig.width=7.5, fig.height=4, out.width='90%', fig.align='center'}
+roc <- calculate_roc(predictions = pisa_predictions_ds2, observed = pisa_valid$Public)
+plot(roc)
+```
+
+```{r}
+confusion_matrix(observed = pisa_valid$Public, predicted = pisa_predictions_ds2 > 0.5)
+```
+
+```{r, include=FALSE}
+# caret::onfusionMatrix(data =  factor(pisa_predictions_ds2 > 0.5), reference = factor(pisa_valid$Public))
+```
+
+## Appendix: Model Summaries
+
+Above we averaged the predicted values across all the models to get a single prediction for each observation in our validation dataset. However, it is possible to pool models using the [`mice::pool()`](https://amices.org/mice/reference/pool.html) function to get a single set of regression coefficients. The table below provides the pooled regression coefficients from the `downsample` function along with the coefficients from the logistic regression model using all the data.
+
+```{r pooled-summary, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+pooled_fit <- mice::pool(pisa_ds_out)
+huxtable::huxreg(list(`Pooled from downsamples` = pooled_fit, 
+					  `Complete data` = pisa_lr_out), 
+				 error_pos = 'same', 
+				 bold_signif = 0.05, 
+				 statistics = c(`n` = 'nobs.1'))
+```
+
+```{r all-model-summary, eval=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+huxtable::huxreg(pisa_ds_out, 
+				 error_format = '', 
+				 error_pos = 'same', 
+				 bold_signif = 0.05)
+```

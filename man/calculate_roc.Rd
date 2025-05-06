@@ -10,7 +10,7 @@ calculate_roc(predictions, observed, cost_of_fp = 1, cost_of_fn = 1, n = 100)
 
 \method{summary}{roc}(object, digits = 3, ...)
 
-\method{plot}{roc}(x, curve = "accuracy", ...)
+\method{plot}{roc}(x, curve = "accuracy", legend.position = c(1, 0.2), ...)
 }
 \arguments{
 \item{predictions}{predicted values.}
@@ -32,6 +32,8 @@ calculate_roc(predictions, observed, cost_of_fp = 1, cost_of_fn = 1, n = 100)
 \item{x}{result of [calculate_roc()].}
 
 \item{curve}{values can be cost, accuracy, or NULL.}
+
+\item{legend.position}{position of the legend for teh accuracy curve plot.}
 }
 \value{
 a ggplot2 expression.
