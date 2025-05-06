@@ -61,7 +61,8 @@ pisa_predictions <- predict(pisa_lr_out, newdata = pisa_valid, type = 'response'
 The figure below shows the distribution of predicted probabilities for the validation dataset. There is some separation between public and private school students, but the densities are clearly centered to the right side of the range.
 
 ```{r, fig.width=7.5, fig.height=3, out.width='90%', fig.align='center'}
-ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions), 
+ggplot(data.frame(Public = pisa_valid$Public, 
+				  Prediction = pisa_predictions), 
        aes(x = Prediction, color = Public)) +
   geom_density()
 ```
@@ -69,7 +70,8 @@ ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions),
 The figure below provides a receiver operator characteristic (ROC) curve along with a plot of the accuracy, sensitivity, and specificity.
 
 ```{r, fig.width=7.5, fig.height=4, out.width='90%', fig.align='center'}
-calculate_roc(predictions = pisa_predictions, observed = pisa_valid$Public) |> plot()
+calculate_roc(predictions = pisa_predictions, 
+			  observed = pisa_valid$Public) |> plot()
 ```
 
 The confusion matrix below, splitting at 0.5, indicates that this model is no better than the null model (i.e percent public school students is `r round(100 * sum(pisa_valid$Public) / nrow(pisa_valid), digits = 1)`%). Of course we could adjust that cut value to optimize either the *specificity* or *sensitivity*.
@@ -161,7 +163,9 @@ length(pisa_ds_out)
 We can use the `predict()` function to get a data frame of predictions. Each column corresponds to the predicted value for each of the `r floor(nrow(pisa_train) / (2 * sum(!pisa_train$Public)))` models.
 
 ```{r}
-pisa_predictions_ds <- predict(pisa_ds_out, newdata = pisa_valid, type = 'response')
+pisa_predictions_ds <- predict(pisa_ds_out,
+							   newdata = pisa_valid, 
+							   type = 'response')
 head(pisa_predictions_ds)
 ```
 
@@ -174,7 +178,8 @@ pisa_predictions_ds2 <- pisa_predictions_ds |> apply(1, mean)
 The density distributions are provided below. These distributions are more like the distributions we expect when we have balanced data even though we did use all the observations to get these predicted probabilities.
 
 ```{r, fig.width=7.5, fig.height=3, out.width='90%', fig.align='center'}
-ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions_ds2), 
+ggplot(data.frame(Public = pisa_valid$Public, 
+				  Prediction = pisa_predictions_ds2), 
        aes(x = Prediction, color = Public)) +
   geom_density()
 ```
@@ -182,12 +187,14 @@ ggplot(data.frame(Public = pisa_valid$Public, Prediction = pisa_predictions_ds2)
 Although the `downsample()` function appears to address the issue of shrinking and off centered fitted values, the model performance metrics provided below suggest that it did not improve the overall performance of the model predictions.
 
 ```{r, fig.width=7.5, fig.height=4, out.width='90%', fig.align='center'}
-roc <- calculate_roc(predictions = pisa_predictions_ds2, observed = pisa_valid$Public)
+roc <- calculate_roc(predictions = pisa_predictions_ds2, 
+					 observed = pisa_valid$Public)
 plot(roc)
 ```
 
 ```{r}
-confusion_matrix(observed = pisa_valid$Public, predicted = pisa_predictions_ds2 > 0.5)
+confusion_matrix(observed = pisa_valid$Public, 
+				 predicted = pisa_predictions_ds2 > 0.5)
 ```
 
 ```{r, include=FALSE}
