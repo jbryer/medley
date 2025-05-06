@@ -28,8 +28,7 @@ Suggests:
     mice,
     randomForest,
     rmarkdown,
-    vtable
-Enhances: 
+    vtable,
     multilevelPSA,
     splitstackshape
 VignetteBuilder: 

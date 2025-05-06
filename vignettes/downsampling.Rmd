@@ -201,7 +201,7 @@ confusion_matrix(observed = pisa_valid$Public,
 # caret::onfusionMatrix(data =  factor(pisa_predictions_ds2 > 0.5), reference = factor(pisa_valid$Public))
 ```
 
-## Appendix: Model Summaries
+## Appendix A: Model Summaries
 
 Above we averaged the predicted values across all the models to get a single prediction for each observation in our validation dataset. However, it is possible to pool models using the [`mice::pool()`](https://amices.org/mice/reference/pool.html) function to get a single set of regression coefficients. The table below provides the pooled regression coefficients from the `downsample` function along with the coefficients from the logistic regression model using all the data.
 
@@ -219,4 +219,45 @@ huxtable::huxreg(pisa_ds_out,
 				 error_format = '', 
 				 error_pos = 'same', 
 				 bold_signif = 0.05)
+```
+
+## Appendix B: Random Forest
+
+The `downsample()` function can use nearly any modeling function available in R. In this appendix we show how to use random forest. In order to use classification with `randomForest()` we must convert our dependent varaible to a factor.
+
+```{r, message=FALSE, warning=FALSE, results='hide'}
+library(randomForest)
+data('pisa', package = 'medley')
+data('pisa_variables', package = 'medley')
+pisa$Public <- factor(pisa$Public)
+pisa_splits <- splitstackshape::stratified(
+	pisa, group = "Public", size = 0.75, bothSets = TRUE)
+pisa_train <- pisa_splits[[1]] |> as.data.frame()
+pisa_valid <- pisa_splits[[2]] |> as.data.frame()
+```
+
+Setting `model_fun = randomForest` will estimate random forest models for each of the models.
+
+```{r}
+pisa_ds_out_rf <- downsample(
+  formu = pisa_formu,
+  data = pisa_train,
+  model_fun = randomForest,
+  ratio = 2)
+length(pisa_ds_out_rf)
+
+pisa_predictions_ds_rf <- predict(pisa_ds_out_rf,
+								  newdata = pisa_valid, 
+								  type = 'response')
+head(pisa_predictions_ds_rf)
+```
+
+Random forest returns the predicted class when `type = 'response'`. There are several ways we can handle this. Here we use a simple voting strategy.
+
+```{r}
+pisa_predictions_ds_rf_vote <- apply(
+	pisa_predictions_ds_rf, 1, 
+	FUN = function(x) { mean(as.logical(x)) > 0.5})
+confusion_matrix(observed = pisa_valid$Public, 
+				 predicted = pisa_predictions_ds_rf_vote)
 ```
