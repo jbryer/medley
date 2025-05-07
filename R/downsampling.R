@@ -22,9 +22,12 @@
 #' @param data data frame with the data to estimate the model from.
 #' @param ratio the ratio of small class to the larger class when downsampling.
 #' @param model_fun modeling function (e.g. `glm`).
+#' @param show_progress if TRUE a progress bar will be displayed showing the status of the model
+#'        estimations.
 #' @param ... other parameters passed to `model_fun`.
 #' @return a list of model outputs, the results of `model_fun`.
 #' @rdname downsample
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 #' @examples
 #' data("pisa", package = "medley")
@@ -40,7 +43,7 @@
 #' )
 #' pisa_predictions_ds <- predict(pisa_ds_out, newdata = pisa_valid, type = 'response')
 #' pisa_predictions_ds2 <- pisa_predictions_ds |> apply(1, mean)
-downsample <- function(formu, data, model_fun, ratio = 1, ...) {
+downsample <- function(formu, data, model_fun, ratio = 1, show_progress = TRUE, ...) {
 	data <- as.data.frame(data)
 	dep_var <- all.vars(formu)[1]
 	tab_out <- table(data[,dep_var])
@@ -53,12 +56,14 @@ downsample <- function(formu, data, model_fun, ratio = 1, ...) {
 		warning('Only training one model. Is this really what you want to do?')
 	}
 	model <- rep(1:n_models, length.out = nrow(train_big)) |> sample()
-	# model <- sample(n_models, size = nrow(train_big), replace = TRUE)
 	models <- list()
+	if(show_progress) {	pb <- utils::txtProgressBar(min = 0, max = n_models, initial = 0, style = 3) }
 	for(i in seq_len(n_models)) {
+		if(show_progress) { utils::setTxtProgressBar(pb, i) }
 		train_data <- rbind(train_small, train_big[model == i,])
 		models[[i]] <- model_fun(formu, train_data, ...)
 	}
+	if(show_progress) { close(pb) }
 	attr(models, 'formula') <- formu
 	attr(models, 'data') <- data
 	class(models) <- c('downsample', 'list')

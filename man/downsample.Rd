@@ -5,7 +5,7 @@
 \alias{predict.downsample}
 \title{Model training using downsampling.}
 \usage{
-downsample(formu, data, model_fun, ratio = 1, ...)
+downsample(formu, data, model_fun, ratio = 1, show_progress = TRUE, ...)
 
 \method{predict}{downsample}(object, newdata, ...)
 }
@@ -18,6 +18,9 @@ description of the model to be fitted.}
 \item{model_fun}{modeling function (e.g. `glm`).}
 
 \item{ratio}{the ratio of small class to the larger class when downsampling.}
+
+\item{show_progress}{if TRUE a progress bar will be displayed showing the status of the model
+estimations.}
 
 \item{...}{other parameters passed to `model_fun`.}
 
