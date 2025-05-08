@@ -285,7 +285,7 @@ medley_rf_out <- medley_train(data = daacs_train,
                               method = randomForest)
 medley_rf_predictions <- predict(medley_rf_out, 
                                  newdata = daacs_valid,
-                                 type = "response")
+                                 type = "response") == 2
 ```
 
 Lastly, the confusion matrix gives the overall accuracy. In this example though we see the random forest performs sligthly worse than logistic regression.
@@ -358,7 +358,7 @@ combine_confusion_matrices(
   `Imputed data set logistic regression` = confusion_matrix(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
   `Imputed data set random forest` = confusion_matrix(daacs_valid_complete_mice$retained, mice_rf_predictions),
   `Medley with logistic regression` = confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
-  `Medley with random forest` = confusion_matrix(daacs_valid$retained, medley_rf_predictions == 2)
+  `Medley with random forest` = confusion_matrix(daacs_valid$retained, medley_rf_predictions)
 ) |>  print(row.names = FALSE)
 
 # combine_confusion_matrices(

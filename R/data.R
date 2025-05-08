@@ -106,3 +106,34 @@ NULL
 #' @source https://www.pisa.oecd.org
 #' @name pisa_variables
 NULL
+
+#' Bank Marketing
+#'
+#' The data is related with direct marketing campaigns (phone calls) of a Portuguese banking
+#' institution. The classification goal is to predict if the client will subscribe a term deposit
+#' (variable `subscribed`).
+#'
+#' @format a data frame with 4,521 observations of 17 variables.
+#' \description{
+#'     \item{age (numeric)}
+#'     \item{job}{type of job}
+#'     \item{marital}{marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)}
+#'     \item{education (categorical: "unknown","secondary","primary","tertiary")}
+#'     \item{default}{has credit in default? (binary: "yes","no")}
+#'     \item{balance}{average yearly balance, in euros (numeric)}
+#'     \item{housing}{has housing loan? (binary: "yes","no")}
+#'     \item{loan}{has personal loan? (binary: "yes","no")}
+#'     \item{contact}{contact communication type (categorical: "unknown","telephone","cellular")}
+#'     \item{day}{last contact day of the month (numeric)}
+#'     \item{month}{last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")}
+#'     \item{duration}{last contact duration, in seconds (numeric)}
+#'     \item{campaign}{number of contacts performed during this campaign and for this client (numeric, includes last contact)}
+#'     \item{pdays}{number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)}
+#'     \item{previous}{number of contacts performed before this campaign and for this client (numeric)}
+#'     \item{poutcome}{outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")}
+#'     \item{subscribed}{has the client subscribed a term deposit? (binary: "yes","no")}
+#' }
+#' @docType data
+#' @source https://archive.ics.uci.edu/dataset/222/bank+marketing
+#' @name bank
+NULL
