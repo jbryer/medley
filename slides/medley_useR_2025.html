@@ -125,7 +125,28 @@ daacs_train &lt;- daacs[train_rows,]
 daacs_valid &lt;- daacs[-train_rows,]
 ```
 
+.font80[
 
+``` r
+str(daacs)
+#&gt; 'data.frame':	5154 obs. of  15 variables:
+#&gt;  $ retained  : logi  TRUE FALSE FALSE TRUE FALSE FALSE ...
+#&gt;  $ page_views: int  NA 120 NA 74 NA NA 29 NA NA NA ...
+#&gt;  $ srl       : num  NA 2.58 NA 2.75 NA ...
+#&gt;  $ math      : num  NA 0.5 NA 0.333 NA ...
+#&gt;  $ reading   : num  NA 0.944 NA 0.944 NA ...
+#&gt;  $ writing   : num  NA 0.722 NA 0.889 NA ...
+#&gt;  $ income    : int  4 3 4 6 6 5 8 9 8 4 ...
+#&gt;  $ employment: int  3 3 3 3 1 3 3 3 3 3 ...
+#&gt;  $ ell       : num  0 1 1 1 0 1 1 1 1 1 ...
+#&gt;  $ ed_mother : int  2 3 3 2 1 3 7 3 6 1 ...
+#&gt;  $ ed_father : int  2 4 3 3 1 3 7 6 4 1 ...
+#&gt;  $ ethnicity : Factor w/ 4 levels "Black or African American",..: 4 4 4 4 3 1 1 4 3 4 ...
+#&gt;  $ gender    : Factor w/ 2 levels "FEMALE","MALE": 2 1 1 1 2 1 2 2 2 1 ...
+#&gt;  $ military  : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+#&gt;  $ age       : num  53.5 63.2 56.3 54.9 69.6 ...
+```
+]
 
 ---
 # Using Complete Data
@@ -384,7 +405,7 @@ get_variable_sets(data = daacs, formula = retained ~ ., min_set_size = 0.1)
 # `medley`
 
 .pull-left[
-Parameters for the `medley_tray` function:
+Parameters for the `medley()` function:
 
 * `data` - The dataset.
 * ` formula` - Formula. This will typically only include the dependent variable, that is `Y ~ .`.
@@ -397,7 +418,7 @@ Parameters for the `medley_tray` function:
 
 .pull-right[
 
-The object returned by `medley` contains the following elements:
+The object returned by `medley()` contains the following elements:
 
 * `n_models` - The number of models estimated.
 * `formulas` - A list of the formulas used for each model. 
@@ -411,13 +432,22 @@ The object returned by `medley` contains the following elements:
 ---
 # Medley
 
+You can use `medley` like most modeling functions in R (i.e. there are `data` and `formula` parameters).
+
+
+
 
 ``` r
 medley_lr_out &lt;- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
+medley_rf_out &lt;- medley(data = daacs_train,
+                              formula = retained ~ .,
+                              method = randomForest)
 ```
+
+Also like most modeling functions, the `predict()` function works as expected.
 
 
 ``` r
@@ -427,14 +457,8 @@ medley_lr_predictions &lt;- predict(medley_lr_out,
 ```
 
 
-``` r
-# Need to convert dependent variable to a factor to ensure we train a classification model
-daacs_train$retained &lt;- as.factor(daacs_train$retained)
-daacs_valid$retained &lt;- as.factor(daacs_valid$retained)
 
-medley_rf_out &lt;- medley(data = daacs_train,
-                              formula = retained ~ .,
-                              method = randomForest)
+``` r
 medley_rf_predictions &lt;- predict(medley_rf_out, 
                                  newdata = daacs_valid,
                                  type = "response") == 2
@@ -486,10 +510,10 @@ The `summary` function will provide some insight into what Medley is doing. Here
 
 ``` r
 summary(medley_lr_out)
-#&gt;    Model    n  Success
-#&gt; m1     1 1268 70.97792
-#&gt; m2     2  788 58.24873
-#&gt; m3     3 1551 43.19794
+#&gt;    Model    n Success
+#&gt; m1     1 1268      NA
+#&gt; m2     2  788      NA
+#&gt; m3     3 1551      NA
 #&gt;                                                                                                                                             Formula
 #&gt; m1 retained ~ page_views + srl + math + reading + writing + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age
 #&gt; m2                            retained ~ page_views + srl + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age
@@ -639,6 +663,14 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 
 	* The only method performing better was mean imputation, which honestly, makes me very unforgettable 🤢
 
+
+### Miscellaneous
+
+* [Downsampling](https://jbryer.github.io/medley/articles/downsampling.html) - the `downsampling()` function is designed for situations where there is significant imbalance in you dependent variable.
+
+* Yet another confusion matrix function [`confusion_matrix`](https://jbryer.github.io/medley/reference/confusion_matrix.html).
+
+* [`recode_small_levels()`](https://jbryer.github.io/medley/reference/recode_small_levels.html) is a utility function that will find rarely used factor levels and recode them.
 
 
 ---

@@ -177,7 +177,11 @@ daacs_train <- daacs[train_rows,]
 daacs_valid <- daacs[-train_rows,]
 ```
 
-
+.font80[
+```{r}
+str(daacs)
+```
+]
 
 ---
 # Using Complete Data
@@ -362,7 +366,7 @@ get_variable_sets(data = daacs, formula = retained ~ ., min_set_size = 0.1)
 # `medley`
 
 .pull-left[
-Parameters for the `medley_tray` function:
+Parameters for the `medley()` function:
 
 * `data` - The dataset.
 * ` formula` - Formula. This will typically only include the dependent variable, that is `Y ~ .`.
@@ -375,7 +379,7 @@ Parameters for the `medley_tray` function:
 
 .pull-right[
 
-The object returned by `medley` contains the following elements:
+The object returned by `medley()` contains the following elements:
 
 * `n_models` - The number of models estimated.
 * `formulas` - A list of the formulas used for each model. 
@@ -389,27 +393,34 @@ The object returned by `medley` contains the following elements:
 ---
 # Medley
 
-```{r medley-train-lr}
+You can use `medley` like most modeling functions in R (i.e. there are `data` and `formula` parameters).
+
+```{r, echo=FALSE}
+# Need to convert dependent variable to a factor to ensure we train a classification model
+daacs_train$retained <- as.factor(daacs_train$retained)
+daacs_valid$retained <- as.factor(daacs_valid$retained)
+```
+
+```{r}
 medley_lr_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
+medley_rf_out <- medley(data = daacs_train,
+                              formula = retained ~ .,
+                              method = randomForest)
 ```
 
-```{r medley-predictions-lr}
+Also like most modeling functions, the `predict()` function works as expected.
+
+```{r}
 medley_lr_predictions <- predict(medley_lr_out,
                                  newdata = daacs_valid,
                                  type = 'response')
 ```
 
-```{r}
-# Need to convert dependent variable to a factor to ensure we train a classification model
-daacs_train$retained <- as.factor(daacs_train$retained)
-daacs_valid$retained <- as.factor(daacs_valid$retained)
 
-medley_rf_out <- medley(data = daacs_train,
-                              formula = retained ~ .,
-                              method = randomForest)
+```{r}
 medley_rf_predictions <- predict(medley_rf_out, 
                                  newdata = daacs_valid,
                                  type = "response") == 2
@@ -539,6 +550,14 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 
 	* The only method performing better was mean imputation, which honestly, makes me very unforgettable 🤢
 
+
+### Miscellaneous
+
+* [Downsampling](https://jbryer.github.io/medley/articles/downsampling.html) - the `downsampling()` function is designed for situations where there is significant imbalance in you dependent variable.
+
+* Yet another confusion matrix function [`confusion_matrix`](https://jbryer.github.io/medley/reference/confusion_matrix.html).
+
+* [`recode_small_levels()`](https://jbryer.github.io/medley/reference/recode_small_levels.html) is a utility function that will find rarely used factor levels and recode them.
 
 
 ---
