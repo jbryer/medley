@@ -11,7 +11,7 @@ institution. The classification goal is to predict if the client will subscribe 
 
     <a class="navbar-brand me-2" href="../index.html">medley</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,26 +50,59 @@ institution. The classification goal is to predict if the client will subscribe 
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>a data frame with 4,521 observations of 17 variables.
+    <p>a data frame with 4,521 observations of 17 variables.</p><dl><dt>age (numeric)</dt>
+<dd><p>age</p></dd>
 
-    age (numeric)
-    jobtype of job
-    maritalmarital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
-    education (categorical: "unknown","secondary","primary","tertiary")
-    defaulthas credit in default? (binary: "yes","no")
-    balanceaverage yearly balance, in euros (numeric)
-    housinghas housing loan? (binary: "yes","no")
-    loanhas personal loan? (binary: "yes","no")
-    contactcontact communication type (categorical: "unknown","telephone","cellular")
-    daylast contact day of the month (numeric)
-    monthlast contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
-    durationlast contact duration, in seconds (numeric)
-    campaignnumber of contacts performed during this campaign and for this client (numeric, includes last contact)
-    pdaysnumber of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
-    previousnumber of contacts performed before this campaign and for this client (numeric)
-    poutcomeoutcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
-    subscribedhas the client subscribed a term deposit? (binary: "yes","no")</p>
-    </div>
+    <dt>job</dt>
+<dd><p>type of job</p></dd>
+
+    <dt>marital</dt>
+<dd><p>marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)</p></dd>
+
+    <dt>education</dt>
+<dd><p>educational level (categorical: "unknown","secondary","primary","tertiary")</p></dd>
+
+    <dt>default</dt>
+<dd><p>has credit in default? (binary: "yes","no")</p></dd>
+
+    <dt>balance</dt>
+<dd><p>average yearly balance, in euros (numeric)</p></dd>
+
+    <dt>housing</dt>
+<dd><p>has housing loan? (binary: "yes","no")</p></dd>
+
+    <dt>loan</dt>
+<dd><p>has personal loan? (binary: "yes","no")</p></dd>
+
+    <dt>contact</dt>
+<dd><p>contact communication type (categorical: "unknown","telephone","cellular")</p></dd>
+
+    <dt>day</dt>
+<dd><p>last contact day of the month (numeric)</p></dd>
+
+    <dt>month</dt>
+<dd><p>last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")</p></dd>
+
+    <dt>duration</dt>
+<dd><p>last contact duration, in seconds (numeric)</p></dd>
+
+    <dt>campaign</dt>
+<dd><p>number of contacts performed during this campaign and for this client (numeric, includes last contact)</p></dd>
+
+    <dt>pdays</dt>
+<dd><p>number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)</p></dd>
+
+    <dt>previous</dt>
+<dd><p>number of contacts performed before this campaign and for this client (numeric)</p></dd>
+
+    <dt>poutcome</dt>
+<dd><p>outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")</p></dd>
+
+    <dt>subscribed</dt>
+<dd><p>has the client subscribed a term deposit? (binary: "yes","no")</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="source">Source<a class="anchor" aria-label="anchor" href="#source"></a></h2>
     <p>https://archive.ics.uci.edu/dataset/222/bank+marketing</p>
@@ -84,7 +117,7 @@ institution. The classification goal is to predict if the client will subscribe 
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
