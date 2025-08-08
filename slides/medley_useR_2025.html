@@ -105,11 +105,11 @@ Figure created using the [`ComplexHeatmap`](https://jokergoo.github.io/ComplexHe
 	
 	b. Multiple imputation.
 
-3. Use methods that does not requirecomplete data (e.g. `xgboost`).
+3. Use methods that does not require complete data (e.g. `xgboost`).
 
 4. Train multiple models using the available data (the `medley` approach).
 
-We will use both logistic regression and random forests with each of these approaches  
+For methods 1, 2, and 4 we will use both logistic regression and random forests with each of these approaches  
 .font80[Why random forest? See [Fernandez-Delgado, Cernadas, Barro, and Amorim (2014)](https://jmlr.org/papers/volume15/delgado14a/delgado14a.pdf)].
 
 
@@ -151,23 +151,32 @@ str(daacs)
 ---
 # Using Complete Data
 
+First we need to subset our training data frame with variables where there are no missing values.
+
+
+``` r
+missingness &lt;- apply(daacs_train, 2, FUN = function(x) { sum(is.na(x)) / length(x)})
+daacs_train_complete &lt;- daacs_train[,names(missingness)[missingness == 0]]
+names(daacs_train_complete)
+#&gt;  [1] "retained"   "income"     "employment" "ell"        "ed_mother" 
+#&gt;  [6] "ed_father"  "ethnicity"  "gender"     "military"   "age"
+```
+
 We will train a model using logistic regression...
 
 
 ``` r
-lr_out &lt;- glm(data = daacs_train,
-              formula = retained ~ income + employment + ell + ed_mother + ed_father +
-                ethnicity + gender + military + age,
+lr_out &lt;- glm(data = daacs_train_complete,
+              formula = retained ~ .,
               family = binomial(link = 'logit'))
 ```
 
-And rondom forests...
+And random forests...
 
 
 ``` r
-rf_out &lt;- randomForest(formula = factor(retained) ~ income + employment + ell + ed_mother + ed_father +
-                         ethnicity + gender + military + age,
-                       data = daacs_train)
+rf_out &lt;- randomForest(formula = factor(retained) ~ .,
+                       data = daacs_train_complete)
 ```
 
 ---
@@ -348,7 +357,7 @@ confusion_matrix(observed = daacs_valid_complete_mice$retained,
 ]
 
 ---
-# XGboost
+# XGBoost
 
 
 ``` r
@@ -430,40 +439,55 @@ The object returned by `medley()` contains the following elements:
 
 
 ---
-# Medley
+# Medley Trainig and Predicting
+
+.pull-left[
+#### Training
 
 You can use `medley` like most modeling functions in R (i.e. there are `data` and `formula` parameters).
 
 
 
+``` r
+medley_lr_out &lt;- medley(
+	data = daacs_train,
+	formula = retained ~ .,
+	method = glm,
+	family = binomial(link = logit))
+```
+
+
+
 
 ``` r
-medley_lr_out &lt;- medley(data = daacs_train,
-                              formula = retained ~ .,
-                              method = glm,
-                              family = binomial(link = logit))
-medley_rf_out &lt;- medley(data = daacs_train,
-                              formula = retained ~ .,
-                              method = randomForest)
+medley_rf_out &lt;- medley(
+	data = daacs_train,
+	formula = retained ~ .,
+	method = randomForest)
 ```
+]
+.pull-right[
+#### Predicting
 
 Also like most modeling functions, the `predict()` function works as expected.
 
 
 ``` r
-medley_lr_predictions &lt;- predict(medley_lr_out,
-                                 newdata = daacs_valid,
-                                 type = 'response')
+medley_lr_predictions &lt;- predict(
+	medley_lr_out,
+	newdata = daacs_valid,
+	type = 'response')
 ```
 
 
 
 ``` r
-medley_rf_predictions &lt;- predict(medley_rf_out, 
-                                 newdata = daacs_valid,
-                                 type = "response") == 2
+medley_rf_predictions &lt;- predict(
+	medley_rf_out, 
+	newdata = daacs_valid,
+	type = "response") == 2
 ```
-
+]
 
 ---
 # Medley Results
@@ -510,10 +534,10 @@ The `summary` function will provide some insight into what Medley is doing. Here
 
 ``` r
 summary(medley_lr_out)
-#&gt;    Model    n Success
-#&gt; m1     1 1268      NA
-#&gt; m2     2  788      NA
-#&gt; m3     3 1551      NA
+#&gt;    Model    n  Success
+#&gt; m1     1 1268 70.97792
+#&gt; m2     2  788 58.24873
+#&gt; m3     3 1551 43.19794
 #&gt;                                                                                                                                             Formula
 #&gt; m1 retained ~ page_views + srl + math + reading + writing + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age
 #&gt; m2                            retained ~ page_views + srl + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age
@@ -523,7 +547,7 @@ summary(medley_lr_out)
 You can get further details about the individual model results using the `models` element on the returned object.
 
 ---
-class:font80
+class:font60
 # Medley Model Summaries
 
 <table class="huxtable" data-quarto-disable-processing="true" style="border-collapse: collapse; border: 0px; margin-bottom: 2em; margin-top: 2em; ; margin-left: auto; margin-right: auto;  " id="tab:modelresults">
