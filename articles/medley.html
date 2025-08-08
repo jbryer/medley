@@ -710,17 +710,17 @@ regression model using the full data set.</p>
 <div class="section level2">
 <h2 id="medley-models">Medley models<a class="anchor" aria-label="anchor" href="#medley-models"></a>
 </h2>
-<p>The <code>medley_train</code> function implements a step wise
-approach to training models. The <code>data</code> and
-<code>formula</code> parameters specify the data set and full model
-(i.e. all possible predictor variables to be considered), similar to
-other modeling functions in R. The <code>method</code> parameter
-indicates what model procedure should be used. In this example we will
-estimate logistic regression models. The <code>medley_train</code> can
-take any additional parameters that need to be passed to the
-<code>method</code> function.</p>
+<p>The <code>medley</code> function implements a step wise approach to
+training models. The <code>data</code> and <code>formula</code>
+parameters specify the data set and full model (i.e. all possible
+predictor variables to be considered), similar to other modeling
+functions in R. The <code>method</code> parameter indicates what model
+procedure should be used. In this example we will estimate logistic
+regression models. The <code>medley</code> can take any additional
+parameters that need to be passed to the <code>method</code>
+function.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">medley_lr_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
+<code class="sourceCode R"><span><span class="va">medley_lr_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley.html">medley</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              method <span class="op">=</span> <span class="va">glm</span>,</span>
 <span>                              family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span>link <span class="op">=</span> <span class="va">logit</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -769,8 +769,8 @@ ed_father + ethnicity + gender + military + age</td>
 </tr>
 </tbody>
 </table>
-<p>The object returned by <code>medley_train</code> contains the
-following elements:</p>
+<p>The object returned by <code>medley</code> contains the following
+elements:</p>
 <ul>
 <li>
 <code>n_models</code> - The number of models estimated.</li>
@@ -1016,21 +1016,21 @@ medley model is 61.086% which is a 5.11% over the baseline, or
 <div class="section level3">
 <h3 id="random-forests">Random Forests<a class="anchor" aria-label="anchor" href="#random-forests"></a>
 </h3>
-<p>The core functionality of the <code>medley_train</code> algorithm is
-to select the most appropriate model given the available data. The
-specific predictive model is up to the user. Fernandez-Delgado et al
-(2014) evaluated the performance of 179 classifiers across 121 data
-sets. Their results showed that, in general, random forest was the best
-performing model. To begin, we load the <code>randomForest</code>
-pacakge and convert our dependent variable to a factor to ensure a
-classification (versus regression) model is estimated.</p>
+<p>The core functionality of the <code>medley</code> algorithm is to
+select the most appropriate model given the available data. The specific
+predictive model is up to the user. Fernandez-Delgado et al (2014)
+evaluated the performance of 179 classifiers across 121 data sets. Their
+results showed that, in general, random forest was the best performing
+model. To begin, we load the <code>randomForest</code> pacakge and
+convert our dependent variable to a factor to ensure a classification
+(versus regression) model is estimated.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">daacs_train</span><span class="op">$</span><span class="va">retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">daacs_train</span><span class="op">$</span><span class="va">retained</span><span class="op">)</span></span>
 <span><span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">daacs_valid</span><span class="op">$</span><span class="va">retained</span><span class="op">)</span></span></code></pre></div>
 <p>Training and predicting are the same as above except we set
 <code>method = randomForest</code>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">medley_rf_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
+<code class="sourceCode R"><span><span class="va">medley_rf_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley.html">medley</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              method <span class="op">=</span> <span class="va">randomForest</span><span class="op">)</span></span>
 <span><span class="va">medley_rf_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">medley_rf_out</span>, </span>
@@ -1053,14 +1053,14 @@ logistic regression.</p>
 <div class="section level3">
 <h3 id="using-observations-in-multiple-models">Using observations in multiple models<a class="anchor" aria-label="anchor" href="#using-observations-in-multiple-models"></a>
 </h3>
-<p>The default behavior of the <code>medley_train</code> algorithm is
-for each observation to be used in only one model. However, in this
-particular example, we have complete demographic data for all students
-so we could potentially use all observations to train that model. The
+<p>The default behavior of the <code>medley</code> algorithm is for each
+observation to be used in only one model. However, in this particular
+example, we have complete demographic data for all students so we could
+potentially use all observations to train that model. The
 <code>exclusive_membership</code> parameter will allow observations to
 be used in training models for which there is complete data.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">medley_rf_out2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley_train.html">medley_train</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
+<code class="sourceCode R"><span><span class="va">medley_rf_out2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/medley.html">medley</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">daacs_train</span>,</span>
 <span>                              formula <span class="op">=</span> <span class="va">retained</span> <span class="op">~</span> <span class="va">.</span>,</span>
 <span>                              exclusive_membership <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                              method <span class="op">=</span> <span class="va">randomForest</span><span class="op">)</span></span>
