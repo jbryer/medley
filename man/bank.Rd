@@ -6,11 +6,11 @@
 \title{Bank Marketing}
 \format{
 a data frame with 4,521 observations of 17 variables.
-\description{
-    \item{age (numeric)}
+\describe{
+    \item{age (numeric)}{age}
     \item{job}{type of job}
     \item{marital}{marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)}
-    \item{education (categorical: "unknown","secondary","primary","tertiary")}
+    \item{education}{educational level (categorical: "unknown","secondary","primary","tertiary")}
     \item{default}{has credit in default? (binary: "yes","no")}
     \item{balance}{average yearly balance, in euros (numeric)}
     \item{housing}{has housing loan? (binary: "yes","no")}

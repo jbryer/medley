@@ -1,0 +1,555 @@
+---
+title: "medley: Predictive Modeling with Missing Data"
+subtitle: "useR! 2025"
+author: Jason Bryer, Ph.D.
+date: "August 9, 2025"
+output:
+  xaringan::moon_reader:
+    css: ["assets/mtheme_max.css", "assets/fonts_mtheme_max.css"]
+    lib_dir: libs
+    seal: false
+    nature:
+      highlightStyle: solarized-light
+      highlightLanguage: R
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+      navigation:
+        scroll: false
+    includes:
+      in_header: [assets/header.html]
+      after_body: [assets/insert-logo.html]
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r generate-pdf, include=FALSE, eval=FALSE}
+# This will generate a PDF of the slide deck.
+pagedown::chrome_print(input = 'medley_useR_2025.html', timeout = 120)
+```
+
+```{r setup, include = FALSE}
+# Cartoons from https://github.com/allisonhorst/stats-illustrations
+# dplyr based upon https://allisonhorst.shinyapps.io/dplyr-learnr/#section-welcome
+
+library(rmarkdown)
+library(knitr)
+library(ggplot2)
+library(medley)
+library(ComplexHeatmap)
+library(mice)
+library(randomForest)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  error = FALSE,
+  comment = "#>",
+  out.width = '100%',
+  fig.height = 5,
+  fig.width = 9,
+  dpi = 240
+)
+
+ggplot2::theme_set(ggplot2::theme_minimal())
+
+# To use, add this to the slide title:   `r I(hexes(c("DATA606")))`
+# It will use images in the images/hex_stickers directory (i.e. the filename is the parameter)
+hexes <- function(x) {
+	x <- rev(sort(x))
+	markup <- function(pkg) glue::glue('<img src="images/hex/{pkg}.png" class="title-hex">')
+	res <- purrr::map_chr(x, markup)
+	paste0(res, collapse = "")
+}
+
+set.seed(2112)
+```
+
+class: center, middle, inverse, title-slide
+
+<img src='medley.png' alt='clav hex logo' align='right' width='300' />
+
+# `r metadata$title`
+## `r metadata$subtitle`
+### `r metadata$author`
+### `r metadata$date`
+
+
+---
+# Agenda
+
+1. Motivation for this package.
+
+2. Exploring patterns of missing data.
+
+3. Overview of some common approaches of training predictive models with missing data.
+
+4. The `medley` approach to training models.
+
+5. Compare the results across the various modeling approaches.
+
+<br/>
+
+.font70[This research was developed under grants P116F150077 and R305A210269 from the U.S.
+Department of Education. However, the contents do not necessarily represent the policy of the
+U.S. Department of Education, and you should not assume endorsement by the Federal
+Government.]
+
+
+---
+# Motivating Example `r I(hexes(c("DAACS")))`
+
+The Diagnostic Assessment and Achievement of College Skills (DAACS; [www.daacs.net](https://daacs.net)) is a suite of technological and social supports designed to optimize student learning. 
+
+Students complete assessments in self-regulated learning, writing, mathematics, and reading comprehension. They are then provided with immediate feedback in terms of one, two, and three dots (developing, emerging, and mastering, respectively) and receive customized strategies and resources based upon their results.
+
+One of our primary research question is whether the inclusion of DAACS data can improve the accuracy of predicting student success above what institutions already know. 
+
+Problem is that although students were expected to complete DAACS as part of orientation, many students did not attend orientation, and then some only completed some of the DAACS assessments.
+
+
+---
+# Data Source `r I(hexes(c("DAACS")))`
+
+Data for this study was collected as part of a large scale randomized control trial.
+
+Online institution of predominately adult learners.
+
+Most students have some prior college experience and transfer in many credits.
+
+Our outcome measure of interest is **retained** which is `TRUE` if a student either graduates or returns for a second term. 
+
+The latest development version can be downloaded from Github (will be on CRAN soon).
+
+```{r, eval=FALSE}
+remotes::isntall_github('jbryer/medley')
+```
+
+```{r}
+data(daacs, package = 'medley')
+(null_accuracy <- mean(daacs$retained))
+```
+
+
+---
+# Missing Data Pattern
+
+```{r upset, echo=FALSE, eval=TRUE, fig.height=2.8, fig.width = 6.5}
+shadow_matrix <- as.data.frame(!is.na(daacs))
+ComplexHeatmap::make_comb_mat(shadow_matrix) |> 
+	ComplexHeatmap::UpSet(right_annotation = NULL,
+						  # pt_size = unit(2, "mm"),
+						  top_annotation = upset_top_annotation(make_comb_mat(shadow_matrix), 
+						  									  height = unit(0.5, 'in'))
+	)
+```
+
+Figure created using the [`ComplexHeatmap`](https://jokergoo.github.io/ComplexHeatmap-reference/book/) package.
+
+---
+# How to Handle Missing Data?
+
+1. Exclude observations or variables with missing data.
+
+2. Impute missing data.
+
+	a. Mean imputation.
+	
+	b. Multiple imputation.
+
+3. Use methods that does not requirecomplete data (e.g. `xgboost`).
+
+4. Train multiple models using the available data (the `medley` approach).
+
+We will use both logistic regression and random forests with each of these approaches  
+.font80[Why random forest? See [Fernandez-Delgado, Cernadas, Barro, and Amorim (2014)](https://jmlr.org/papers/volume15/delgado14a/delgado14a.pdf)].
+
+
+---
+# Data Preparation
+
+To perform the predictive modeling we will split the data into training (70%) and validation (30%) data sets.
+
+```{r split-dataset}
+set.seed(2112); train_rows <- sample(nrow(daacs), nrow(daacs) * 0.7)
+daacs_train <- daacs[train_rows,]
+daacs_valid <- daacs[-train_rows,]
+```
+
+
+
+---
+# Using Complete Data
+
+We will train a model using logistic regression...
+
+```{r demographics-model}
+lr_out <- glm(data = daacs_train,
+              formula = retained ~ income + employment + ell + ed_mother + ed_father +
+                ethnicity + gender + military + age,
+              family = binomial(link = 'logit'))
+```
+
+And rondom forests...
+
+```{r}
+rf_out <- randomForest(formula = factor(retained) ~ income + employment + ell + ed_mother + ed_father +
+                         ethnicity + gender + military + age,
+                       data = daacs_train)
+```
+
+---
+# Using Complete Data Results
+
+.pull-left[
+Logistic Regression
+```{r demographics-model-predictions1}
+lr_predictions <- predict(lr_out, 
+						  newdata = daacs_valid, 
+						  type = 'response')
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = lr_predictions > 0.5)
+```
+]
+.pull-right[
+Random Forest
+```{r demographics-model-predictions2}
+rf_predictions <- predict(rf_out, 
+						  newdata = daacs_valid, 
+						  type = 'response')
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = rf_predictions)
+```
+
+]
+
+
+---
+# Mean Imputation
+
+```{r}
+daacs_complete_mean <- daacs
+for(i in 2:ncol(daacs_complete_mean)) {
+	missing_rows <- is.na(daacs_complete_mean[,i])
+	if(sum(missing_rows) > 0) {
+		daacs_complete_mean[missing_rows, i] <- mean(daacs_complete_mean[,i], na.rm = TRUE)
+	}
+}
+
+daacs_train_complete_mean <- daacs_complete_mean[train_rows,]
+daacs_valid_complete_mean <- daacs_complete_mean[-train_rows,]
+
+mean_lr_out <- glm(formula = retained ~ .,
+                   data = daacs_train_complete_mean,
+                   family = binomial(link = logit))
+mean_lr_predictions <- predict(mean_lr_out, 
+							   newdata = daacs_valid_complete_mean, 
+							   type = 'response')
+
+mean_rf_out <- randomForest(formula = factor(retained) ~ .,
+                            data = daacs_train_complete_mean)
+mean_rf_predictions <- predict(mean_rf_out,
+							   newdata = daacs_valid_complete_mean, 
+							   type = 'response')
+```
+
+---
+# Mean Imputation Results
+
+.pull-left[
+Logistic Regression
+```{r}
+confusion_matrix(observed = daacs_valid_complete_mean$retained,
+                 predicted = mean_lr_predictions > 0.5)
+```
+
+]
+
+.pull-right[
+Random Forests
+```{r}
+confusion_matrix(observed = daacs_valid_complete_mean$retained,
+                 predicted = mean_rf_predictions)
+```
+]
+
+
+---
+# Multiple Imputation `r I(hexes(c("mice")))`
+
+We will use the [`mice`](https://github.com/amices/mice) package to do multiple imputation.
+
+```{r mice-impute, message = FALSE}
+mice_out <- mice::mice(daacs[,-1], M = 5, seed = 2112, printFlag = FALSE)
+daacs_complete_mice <- cbind(retained = daacs$retained, mice::complete(mice_out))
+
+daacs_train_complete_mice <- daacs_complete_mice[train_rows,]
+daacs_valid_complete_mice <- daacs_complete_mice[-train_rows,]
+```
+
+```{r}
+mice_lr_out <- glm(formula = retained ~ .,
+                   data = daacs_train_complete_mice,
+                   family = binomial(link = logit))
+mice_lr_predictions <- predict(mice_lr_out, 
+							   newdata = daacs_valid_complete_mice, 
+							   type = 'response')
+
+mice_rf_out <- randomForest(formula = factor(retained) ~ .,
+                            data = daacs_train_complete_mice)
+mice_rf_predictions <- predict(mice_rf_out, 
+							   newdata = daacs_valid_complete_mice,
+							   type = 'response')
+
+```
+
+---
+# Multiple Imputation Results `r I(hexes(c("mice")))`
+
+.pull-left[
+Logistic Regression
+```{r}
+confusion_matrix(observed = daacs_valid_complete_mice$retained,
+                 predicted = mice_lr_predictions > 0.5)
+```
+
+]
+
+.pull-right[
+Random Forests
+```{r}
+confusion_matrix(observed = daacs_valid_complete_mice$retained,
+                 predicted = mice_rf_predictions)
+
+```
+
+]
+
+---
+# XGboost
+
+```{r, message=FALSE, results='hide'}
+library(xgboost)
+options(na.action='na.pass')
+train_data <- Matrix::sparse.model.matrix(retained ~ ., data = daacs_train)
+xg_out <- xgboost(data = train_data,
+				  label = daacs_train$retained == TRUE,
+				  nrounds = 100,
+				  objective = "binary:logistic")
+xg_predicted <- predict(xg_out, Matrix::sparse.model.matrix(retained ~ ., data = daacs_valid))
+```
+
+### Results
+
+```{r}
+confusion_matrix(observed = daacs_valid$retained,
+				 predicted = xg_predicted > 0.5)
+```
+
+---
+# Medley Approach
+
+The goal of the `medley` package is to provide a framework for training models based upon the patterns of missing data.
+
+Be default, an observation will be used in the model with the most number of predictor varaibles.
+
+```{r}
+get_variable_sets(data = daacs, formula = retained ~ ., min_set_size = 0.1)
+```
+
+---
+# `medley_train`
+
+.pull-left[
+Parameters for the `medley_tray` function:
+
+* `data` - The dataset.
+* ` formula` - Formula. This will typically only include the dependent variable, that is `Y ~ .`.
+* `method` - The actual modeling function. The default is `stats::glm`.
+* `var_sets` - A list of formulas used for the various models. Typically the `get_varaible_sets()` function will provide reasonable defaults.
+* `min_set_size` - The minimum (as a percentage) size of any dataset to train a model.
+* `exclusive_membership` - If `TRUE`, any observation will be used in exactly one model.
+* `...` - Other parameters passed to the `method` function.
+]
+
+.pull-right[
+
+The object returned by `medley_train` contains the following elements:
+
+* `n_models` - The number of models estimated.
+* `formulas` - A list of the formulas used for each model. 
+* `models` - A list containing the model output for each model. In this example this would contain the results of the `glm` function call.
+* `data` - The full data set used to train the models.
+* `model_observations` - A data frame indicating which models each observation was used in. The rows correspond to the rows in `data` and the columns correspond to the model.
+
+]
+
+
+---
+# Medley
+
+```{r medley-train-lr}
+medley_lr_out <- medley_train(data = daacs_train,
+                              formula = retained ~ .,
+                              method = glm,
+                              family = binomial(link = logit))
+```
+
+```{r medley-predictions-lr}
+medley_lr_predictions <- predict(medley_lr_out,
+                                 newdata = daacs_valid,
+                                 type = 'response')
+```
+
+```{r}
+# Need to convert dependent variable to a factor to ensure we train a classification model
+daacs_train$retained <- as.factor(daacs_train$retained)
+daacs_valid$retained <- as.factor(daacs_valid$retained)
+
+medley_rf_out <- medley_train(data = daacs_train,
+                              formula = retained ~ .,
+                              method = randomForest)
+medley_rf_predictions <- predict(medley_rf_out, 
+                                 newdata = daacs_valid,
+                                 type = "response") == 2
+```
+
+
+---
+# Medley Results
+
+.pull-left[
+Logistic Regression
+
+```{r}
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = medley_lr_predictions > 0.5)
+```
+]
+
+.pull-right[
+Random Forests
+
+```{r}
+confusion_matrix(observed = daacs_valid$retained,
+                 predicted = medley_rf_predictions )
+```
+]
+
+---
+# Medley Summary
+
+The `summary` function will provide some insight into what Medley is doing. Here, we trained three models.
+
+```{r}
+summary(medley_lr_out)
+```
+
+You can get further details about the individual model results using the `models` element on the returned object.
+
+---
+class:font80
+# Medley Model Summaries
+
+```{r modelresults, echo=FALSE, warning=FALSE}
+huxtable::huxreg(medley_lr_out$models, error_pos = 'right')
+```
+
+
+---
+# Comparing Results
+
+```{r summary-table-setup, echo=FALSE, results='kable'}
+overall <- data.frame(
+  Method = c(
+    'Observed data only logistic regression',
+    'Observed data only random forest',
+    'Mean imputed data set with logistic regression',
+    'Mean imputed data set with random forest',
+    'Mice imputed data set logistic regression',
+    'Mice imputed data set random forest',
+    'XGboost',
+    'Medley with logistic regression',
+    'Medley with random forest'
+  ),
+  Accuracy = c(
+    100 * accuracy(daacs_valid$retained, lr_predictions > 0.5),
+    100 * accuracy(daacs_valid$retained, rf_predictions),
+    100 * accuracy(daacs_valid_complete_mean$retained, mean_lr_predictions > 0.5),
+    100 * accuracy(daacs_valid_complete_mean$retained, mean_rf_predictions),
+    100 * accuracy(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
+    100 * accuracy(daacs_valid_complete_mice$retained, mice_rf_predictions),
+    100 * accuracy(daacs_valid$retained, xg_predicted > 0.5),
+    100 * accuracy(daacs_valid$retained, medley_lr_predictions > 0.5),
+    100 * accuracy(daacs_valid$retained, medley_rf_predictions)
+  )
+)
+overall$Improvement <- overall$Accuracy - (100 * null_accuracy)
+knitr::kable(overall, 
+             row.names = FALSE,
+             digits = 2) |>
+  kableExtra::add_footnote(
+    paste0('Improvement is the difference with the overall retention rate of ', 
+           round(100*null_accuracy, digits = 3), '%.'),
+    notation = 'none')
+```
+
+
+---
+# Comparing Results (cont.)
+
+```{r, echo=FALSE, prompt=FALSE, comment=''}
+options(width = 120)
+combine_confusion_matrices(
+  `Observed data only logistic regression` = confusion_matrix(daacs_valid$retained, lr_predictions > 0.5),
+  `Observed data only random forest` = confusion_matrix(daacs_valid$retained, rf_predictions),
+  `Imputed data set logistic regression` = confusion_matrix(daacs_valid_complete_mice$retained, mice_lr_predictions > 0.5),
+  `Imputed data set random forest` = confusion_matrix(daacs_valid_complete_mice$retained, mice_rf_predictions),
+  `XGboost` = confusion_matrix(daacs_valid$retained, xg_predicted > 0.5),
+  `Medley with logistic regression` = confusion_matrix(daacs_valid$retained, medley_lr_predictions > 0.5), 
+  `Medley with random forest` = confusion_matrix(daacs_valid$retained, medley_rf_predictions)
+) |>  print(row.names = FALSE)
+```
+
+---
+class: font90
+# Reusing Data
+
+Recall that we have a number of variables where there was no missing data. We could potentially use all observations for the "base" model (i.e. the model we use when there is missing data in the other variables).
+
+We set `exclusive_membership = FALSE` to allow observations to be used in multiple models.
+
+```{r}
+medley_rf_out2 <- medley_train(data = daacs_train, formula = retained ~ ., method = randomForest,
+							   exclusive_membership = FALSE)
+medley_rf_predictions2 <- predict(medley_rf_out2, newdata = daacs_valid,type = "response")
+confusion_matrix(observed = daacs_valid$retained, predicted = medley_rf_predictions2)
+```
+
+In this case, it turns out to not help increase accuracy, in part because we know there is an interaction between missingness and some demographics.
+
+
+---
+# Discussion
+
+* 
+
+---
+class: inverse, right, middle, hide-logo, font130
+
+.left-column[
+
+```{r qrcode, echo=FALSE, out.width='100%', out.height='100%', fig.width=4, fig.height=4}
+qrcode::qr_code('https://github.com/jbryer/medley', 'M') |> plot(col = c('#005DAC', 'white'))
+```
+
+]
+
+.font180[Thank you!]
+
+[`r icons::fontawesome("paper-plane")` jason.bryer@cuny.edu](mailto:jason.bryer@cuny.edu)  
+[`r icons::fontawesome("github")` @jbryer](https://github.com/jbryer)  
+[`r icons::fontawesome('mastodon')` @jbryer@vis.social](https://vis.social/@jbryer)  
+[`r icons::fontawesome("link")` github.com/jbryer/medley](https://github.com/jbryer/medley)   
+

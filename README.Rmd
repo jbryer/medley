@@ -25,6 +25,8 @@ library(badger)
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
 **Website:** https://jbryer.github.io/medley/
 
+[Slides from useR! 2025 conference](https://github.com/jbryer/medley/slides/medley_useR_2025.pdf)
+
 Most predictive modeling strategies require there to be no missing data for model estimation. When there is missing data, there are generally two strategies for working with missing data: 1.) exclude the variables (columns) or observations (rows) where there is missing data; or 2.) impute the missing data. However, data is often missing in systematic ways. Excluding data from training is ignoring potentially predictive information and for many imputation procedures the missing completely at random (MCAR) assumption is violated.
 
 The `medley` package implements a solution to modeling when there are systematic patterns of missingness. A working example of predicting student retention from a larger study of the Diagnostic Assessment and Achievement of College Skills (DAACS) will be explored. In this study, demographic data was collected at enrollment from all students and then students completed diagnostic assessments in self-regulated learning (SRL), writing, mathematics, and reading during their first few weeks of the semester. Although all students were expected to complete DAACS, there were no consequence and therefore a large percentage of student completed none or only some of the assessments. The resulting dataset has three predominate response patterns: 1.) students who completed all four assessments, 2.) students who completed only the SRL assessment, and 3). students who did not complete any of the assessments. 

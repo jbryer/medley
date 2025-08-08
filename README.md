@@ -6,13 +6,16 @@
 <!-- badges: start -->
 
 [![](https://www.r-pkg.org/badges/version/medley?color=orange)](https://cran.r-project.org/package=medley)
-[![](https://img.shields.io/badge/devel%20version-0.9.0-blue.svg)](https://github.com/jbryer/medley)
+[![](https://img.shields.io/badge/devel%20version-0.9.3-blue.svg)](https://github.com/jbryer/medley)
 [![R build
 status](https://github.com/jbryer/medley/workflows/R-CMD-check/badge.svg)](https://github.com/jbryer/medley/actions)
 <!-- badges: end -->
 
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
 **Website:** <https://jbryer.github.io/medley/>
+
+[Slides from useR! 2025
+conference](https://github.com/jbryer/medley/slides/medley_useR_2025.pdf)
 
 Most predictive modeling strategies require there to be no missing data
 for model estimation. When there is missing data, there are generally
