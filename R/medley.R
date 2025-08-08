@@ -21,7 +21,7 @@
 #' }
 #' @importFrom ComplexHeatmap make_comb_mat
 #' @export
-medley_train <- function(
+medley <- function(
 		data,
 		formula,
 		method = glm,
@@ -110,7 +110,7 @@ medley_train <- function(
 	return(results)
 }
 
-#' @rdname medley_train
+#' @rdname medley
 #' @method summary medley
 #' @importFrom huxtable huxreg print_screen
 #' @export
@@ -129,16 +129,16 @@ summary.medley <- function(object, ...) {
 	model_sum
 }
 
-#' @rdname medley_train
+#' @rdname medley
 #' @method print medley
-#' @param x the results of `medley_train`.
+#' @param x the results of `medley`.
 #' @param ... currently not used.
 print.medley <- function(x, ...) {
 	summary(x, ...)
 }
 
-#' @rdname medley_train
-#' @param object the results from `medley_train`.
+#' @rdname medley
+#' @param object the results from `medley`.
 #' @param newdata (optional) a new data.frame to get predictions for.
 #' @param ... other parameters passed to the `predict()` function.
 #' @return a vector of predictions.

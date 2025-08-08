@@ -359,7 +359,9 @@ confusion_matrix(observed = daacs_valid$retained,
 ---
 # Medley Approach
 
-The goal of the `medley` package is to provide a framework for training
+The goal of the `medley` package is to provide a framework for training models based upon the patterns of missing data.
+
+Be default, an observation will be used in the model with the most number of predictor varaibles.
 
 
 ``` r
@@ -379,7 +381,7 @@ get_variable_sets(data = daacs, formula = retained ~ ., min_set_size = 0.1)
 ```
 
 ---
-# `medley_train`
+# `medley`
 
 .pull-left[
 Parameters for the `medley_tray` function:
@@ -395,7 +397,7 @@ Parameters for the `medley_tray` function:
 
 .pull-right[
 
-The object returned by `medley_train` contains the following elements:
+The object returned by `medley` contains the following elements:
 
 * `n_models` - The number of models estimated.
 * `formulas` - A list of the formulas used for each model. 
@@ -411,7 +413,7 @@ The object returned by `medley_train` contains the following elements:
 
 
 ``` r
-medley_lr_out &lt;- medley_train(data = daacs_train,
+medley_lr_out &lt;- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
@@ -430,7 +432,7 @@ medley_lr_predictions &lt;- predict(medley_lr_out,
 daacs_train$retained &lt;- as.factor(daacs_train$retained)
 daacs_valid$retained &lt;- as.factor(daacs_valid$retained)
 
-medley_rf_out &lt;- medley_train(data = daacs_train,
+medley_rf_out &lt;- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = randomForest)
 medley_rf_predictions &lt;- predict(medley_rf_out, 
@@ -612,7 +614,7 @@ We set `exclusive_membership = FALSE` to allow observations to be used in multip
 
 
 ``` r
-medley_rf_out2 &lt;- medley_train(data = daacs_train, formula = retained ~ ., method = randomForest,
+medley_rf_out2 &lt;- medley(data = daacs_train, formula = retained ~ ., method = randomForest,
 							   exclusive_membership = FALSE)
 medley_rf_predictions2 &lt;- predict(medley_rf_out2, newdata = daacs_valid,type = "response")
 confusion_matrix(observed = daacs_valid$retained, predicted = medley_rf_predictions2)
@@ -631,7 +633,13 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 ---
 # Discussion
 
-* The 
+* Training predictive models can be challenging when there is a large amount of systematicly missing data.
+
+* The medley approach performs very well compared to other approaches.
+
+	* The only method performing better was mean imputation, which honestly, makes me very unforgettable 🤢
+
+
 
 ---
 class: inverse, right, middle, hide-logo, font130

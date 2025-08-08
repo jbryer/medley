@@ -25,7 +25,7 @@ editor_options:
 
 ```{r generate-pdf, include=FALSE, eval=FALSE}
 # This will generate a PDF of the slide deck.
-pagedown::chrome_print(input = 'medley_useR_2025.html', timeout = 120)
+pagedown::chrome_print(input = 'slides/medley_useR_2025.html', timeout = 120)
 ```
 
 ```{r setup, include = FALSE}
@@ -359,7 +359,7 @@ get_variable_sets(data = daacs, formula = retained ~ ., min_set_size = 0.1)
 ```
 
 ---
-# `medley_train`
+# `medley`
 
 .pull-left[
 Parameters for the `medley_tray` function:
@@ -375,7 +375,7 @@ Parameters for the `medley_tray` function:
 
 .pull-right[
 
-The object returned by `medley_train` contains the following elements:
+The object returned by `medley` contains the following elements:
 
 * `n_models` - The number of models estimated.
 * `formulas` - A list of the formulas used for each model. 
@@ -390,7 +390,7 @@ The object returned by `medley_train` contains the following elements:
 # Medley
 
 ```{r medley-train-lr}
-medley_lr_out <- medley_train(data = daacs_train,
+medley_lr_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
@@ -407,7 +407,7 @@ medley_lr_predictions <- predict(medley_lr_out,
 daacs_train$retained <- as.factor(daacs_train$retained)
 daacs_valid$retained <- as.factor(daacs_valid$retained)
 
-medley_rf_out <- medley_train(data = daacs_train,
+medley_rf_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = randomForest)
 medley_rf_predictions <- predict(medley_rf_out, 
@@ -521,7 +521,7 @@ Recall that we have a number of variables where there was no missing data. We co
 We set `exclusive_membership = FALSE` to allow observations to be used in multiple models.
 
 ```{r}
-medley_rf_out2 <- medley_train(data = daacs_train, formula = retained ~ ., method = randomForest,
+medley_rf_out2 <- medley(data = daacs_train, formula = retained ~ ., method = randomForest,
 							   exclusive_membership = FALSE)
 medley_rf_predictions2 <- predict(medley_rf_out2, newdata = daacs_valid,type = "response")
 confusion_matrix(observed = daacs_valid$retained, predicted = medley_rf_predictions2)
@@ -533,7 +533,13 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 ---
 # Discussion
 
-* 
+* Training predictive models can be challenging when there is a large amount of systematicly missing data.
+
+* The medley approach performs very well compared to other approaches.
+
+	* The only method performing better was mean imputation, which honestly, makes me very unforgettable 🤢
+
+
 
 ---
 class: inverse, right, middle, hide-logo, font130

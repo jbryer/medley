@@ -123,7 +123,7 @@ set.seed(2112); train_rows <- sample(nrow(nhis_bmi), nrow(nhis_bmi) * 0.75)
 nhis_bmi_train <- nhis_bmi[train_rows,]
 nhis_bmi_valid <- nhis_bmi[-train_rows,]
 
-nhis_medley <- medley_train(
+nhis_medley <- medley(
 	data = nhis_bmi_train,
 	formula = BMI ~ .,
 	method = lm,
@@ -222,7 +222,7 @@ predict.xgboost_model <- function(object, newdata, ...) {
 	)
 }
 
-nhis_medley_xg <- medley_train(
+nhis_medley_xg <- medley(
 	data = nhis_bmi_train,
 	formula = BMI ~ .,
 	var_sets = var_sets,

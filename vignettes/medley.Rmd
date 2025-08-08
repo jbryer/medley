@@ -74,7 +74,7 @@ There are generally two choices when estimating models when there is missing dat
 In the DAACS data set as depicted in Figure \@ref(fig:upset) the demographics variables were observed for all students. To start we train a logistic regression model on the training data.
 
 ```{r demographics-model-medley, include=FALSE, eval=FALSE}
-# lr_medley_base_out <- medley_train(data = daacs_train,
+# lr_medley_base_out <- medley(data = daacs_train,
 #                                    formula = retained ~ income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age,
 #                                    family = binomial(link = 'logit') )
 ```
@@ -200,10 +200,10 @@ confusion_matrix(observed = daacs_valid_complete_mice$retained,
 
 # Medley models
 
-The `medley_train` function implements a step wise approach to training models. The `data` and `formula` parameters specify the data set and full model (i.e. all possible predictor variables to be considered), similar to other modeling functions in R. The `method` parameter indicates what model procedure should be used. In this example we will estimate logistic regression models. The `medley_train` can take any additional parameters that need to be passed to the `method` function.
+The `medley` function implements a step wise approach to training models. The `data` and `formula` parameters specify the data set and full model (i.e. all possible predictor variables to be considered), similar to other modeling functions in R. The `method` parameter indicates what model procedure should be used. In this example we will estimate logistic regression models. The `medley` can take any additional parameters that need to be passed to the `method` function.
 
 ```{r medley-train-lr}
-medley_lr_out <- medley_train(data = daacs_train,
+medley_lr_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
                               family = binomial(link = logit))
@@ -231,7 +231,7 @@ knitr::kable(model_sum,
              caption = "Baseline retention rate by model")
 ```
 
-The object returned by `medley_train` contains the following elements:
+The object returned by `medley` contains the following elements:
 
 * `n_models` - The number of models estimated.
 * `formulas` - A list of the formulas used for each model. 
@@ -270,7 +270,7 @@ confusion_matrix(observed = daacs_valid$retained,
 
 ## Random Forests
 
-The core functionality of the `medley_train` algorithm is to select the most appropriate model given the available data. The specific predictive model is up to the user. Fernandez-Delgado et al (2014) evaluated the performance of 179 classifiers across 121 data sets. Their results showed that, in general, random forest was the best performing model. To begin, we load the `randomForest` pacakge and convert our dependent variable to a factor to ensure a classification (versus regression) model is estimated.
+The core functionality of the `medley` algorithm is to select the most appropriate model given the available data. The specific predictive model is up to the user. Fernandez-Delgado et al (2014) evaluated the performance of 179 classifiers across 121 data sets. Their results showed that, in general, random forest was the best performing model. To begin, we load the `randomForest` pacakge and convert our dependent variable to a factor to ensure a classification (versus regression) model is estimated.
 
 ```{r random-forest-setup, message=FALSE}
 daacs_train$retained <- as.factor(daacs_train$retained)
@@ -280,7 +280,7 @@ daacs_valid$retained <- as.factor(daacs_valid$retained)
 Training and predicting are the same as above except we set `method = randomForest`.
 
 ```{r medley-random-forest}
-medley_rf_out <- medley_train(data = daacs_train,
+medley_rf_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = randomForest)
 medley_rf_predictions <- predict(medley_rf_out, 
@@ -297,10 +297,10 @@ confusion_matrix(observed = daacs_valid$retained,
 
 ## Using observations in multiple models
 
-The default behavior of the `medley_train` algorithm is for each observation to be used in only one model. However, in this particular example, we have complete demographic data for all students so we could potentially use all observations to train that model. The `exclusive_membership` parameter will allow observations to be used in training models for which there is complete data. 
+The default behavior of the `medley` algorithm is for each observation to be used in only one model. However, in this particular example, we have complete demographic data for all students so we could potentially use all observations to train that model. The `exclusive_membership` parameter will allow observations to be used in training models for which there is complete data. 
 
 ```{r medley-exclusive-membership}
-medley_rf_out2 <- medley_train(data = daacs_train,
+medley_rf_out2 <- medley(data = daacs_train,
                               formula = retained ~ .,
                               exclusive_membership = FALSE,
                               method = randomForest)
