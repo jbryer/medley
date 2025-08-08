@@ -25,7 +25,7 @@ library(badger)
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
 **Website:** https://jbryer.github.io/medley/
 
-[Slides from useR! 2025 conference](https://github.com/jbryer/medley/slides/medley_useR_2025.pdf)
+[Slides from useR! 2025 conference](https://github.com/jbryer/medley/blob/master/slides/medley_useR_2025.pdf)
 
 Most predictive modeling strategies require there to be no missing data for model estimation. When there is missing data, there are generally two strategies for working with missing data: 1.) exclude the variables (columns) or observations (rows) where there is missing data; or 2.) impute the missing data. However, data is often missing in systematic ways. Excluding data from training is ignoring potentially predictive information and for many imputation procedures the missing completely at random (MCAR) assumption is violated.
 
