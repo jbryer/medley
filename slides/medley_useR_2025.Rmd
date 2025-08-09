@@ -1,6 +1,6 @@
 ---
 title: "medley: Predictive Modeling with Missing Data"
-subtitle: "useR! 2025"
+subtitle: "useR! 2025, Duke University"
 author: Jason Bryer, Ph.D.
 date: "August 9, 2025"
 output:
@@ -85,13 +85,13 @@ class: center, middle, inverse, title-slide
 
 3. Overview of some common approaches of training predictive models with missing data.
 
-4. The `medley` approach to training models.
+4. The `medley` approach to predictive modeling.
 
 5. Compare the results across the various modeling approaches.
 
-<br/>
+<br/><br/>
 
-.font70[This research was developed under grants P116F150077 and R305A210269 from the U.S.
+.font70[This research was developed under grant [R305A210269](https://ies.ed.gov/use-work/awards/examining-efficacy-predictive-power-and-cost-effectiveness-diagnostic-assessment-and-achievement?ID=4549) from the U.S.
 Department of Education. However, the contents do not necessarily represent the policy of the
 U.S. Department of Education, and you should not assume endorsement by the Federal
 Government.]
@@ -100,13 +100,13 @@ Government.]
 ---
 # Motivating Example `r I(hexes(c("DAACS")))`
 
-The Diagnostic Assessment and Achievement of College Skills (DAACS; [www.daacs.net](https://daacs.net)) is a suite of technological and social supports designed to optimize student learning. 
+The Diagnostic Assessment and Achievement of College Skills (DAACS; [www.daacs.net](https://daacs.net)) is a suite of technological and social supports designed to optimize student learning. It asseses college readiness in a *no-stakes* environment.
 
-Students complete assessments in self-regulated learning, writing, mathematics, and reading comprehension. They are then provided with immediate feedback in terms of one, two, and three dots (developing, emerging, and mastering, respectively) and receive customized strategies and resources based upon their results.
+Students complete **assessments** in **self-regulated learning, writing, mathematics, and reading comprehension**. They are then provided with immediate feedback in terms of one, two, and three dots (developing, emerging, and mastering, respectively) and receive customized strategies and resources based upon their results.
 
-One of our primary research question is whether the inclusion of DAACS data can improve the accuracy of predicting student success above what institutions already know. 
+One of our primary research question is whether **can DAACS improve the accuracy of predicting student success** above what institutions already know?
 
-Problem is that although students were expected to complete DAACS as part of orientation, many students did not attend orientation, and then some only completed some of the DAACS assessments.
+Problem is that although students were expected to complete DAACS as part of orientation, many students did not attend orientation, and then some students did not complete all four assessments.
 
 
 ---
@@ -131,6 +131,14 @@ data(daacs, package = 'medley')
 (null_accuracy <- mean(daacs$retained))
 ```
 
+---
+# Study Outcomes
+
+```{r, echo=FALSE, out.height='500px', out.width='1000px', fig.align='center'}
+knitr::include_graphics('images/DAACS_Retained.png')
+```
+
+.font70[See [Bryer, Andrade, Cleary, Lui, Franklin, & Akhmedjanova, (in press)](https://github.com/daacs/FIPSE-Efficacy) for more details.]
 
 ---
 # Missing Data Pattern
@@ -162,8 +170,7 @@ Figure created using the [`ComplexHeatmap`](https://jokergoo.github.io/ComplexHe
 
 4. Train multiple models using the available data (the `medley` approach).
 
-For methods 1, 2, and 4 we will use both logistic regression and random forests with each of these approaches  
-.font80[Why random forest? See [Fernandez-Delgado, Cernadas, Barro, and Amorim (2014)](https://jmlr.org/papers/volume15/delgado14a/delgado14a.pdf)].
+For methods 1, 2, and 4 we will use both logistic regression and random forests with each of these approaches. Why random forest? See [Fernandez-Delgado, Cernadas, Barro, and Amorim (2014)](https://jmlr.org/papers/volume15/delgado14a/delgado14a.pdf).
 
 
 ---
@@ -239,27 +246,27 @@ confusion_matrix(observed = daacs_valid$retained,
 # Mean Imputation
 
 ```{r}
-daacs_complete_mean <- daacs
-for(i in 2:ncol(daacs_complete_mean)) {
-	missing_rows <- is.na(daacs_complete_mean[,i])
-	if(sum(missing_rows) > 0) {
+daacs_complete_mean <- daacs                                            # Create a copy of the data.frame
+for(i in 2:ncol(daacs_complete_mean)) {                                 # Loop through all the variables,
+	missing_rows <- is.na(daacs_complete_mean[,i])                      # find the rows with missing
+	if(sum(missing_rows) > 0) {                                         # values and replace with mean.
 		daacs_complete_mean[missing_rows, i] <- mean(daacs_complete_mean[,i], na.rm = TRUE)
 	}
 }
 
-daacs_train_complete_mean <- daacs_complete_mean[train_rows,]
-daacs_valid_complete_mean <- daacs_complete_mean[-train_rows,]
+daacs_train_complete_mean <- daacs_complete_mean[train_rows,]           # Split into training and
+daacs_valid_complete_mean <- daacs_complete_mean[-train_rows,]          # validation data.frames
 
-mean_lr_out <- glm(formula = retained ~ .,
+mean_lr_out <- glm(formula = retained ~ .,                              # Logistic regression
                    data = daacs_train_complete_mean,
                    family = binomial(link = logit))
-mean_lr_predictions <- predict(mean_lr_out, 
+mean_lr_predictions <- predict(mean_lr_out,                             # Random forest
 							   newdata = daacs_valid_complete_mean, 
 							   type = 'response')
 
-mean_rf_out <- randomForest(formula = factor(retained) ~ .,
+mean_rf_out <- randomForest(formula = factor(retained) ~ .,             # Logistic regression predictions
                             data = daacs_train_complete_mean)
-mean_rf_predictions <- predict(mean_rf_out,
+mean_rf_predictions <- predict(mean_rf_out,                             # Random forest predictions
 							   newdata = daacs_valid_complete_mean, 
 							   type = 'response')
 ```
@@ -378,9 +385,9 @@ Parameters for the `medley()` function:
 * ` formula` - Formula. This will typically only include the dependent variable, that is `Y ~ .`.
 * `method` - The actual modeling function. The default is `stats::glm`.
 * `var_sets` - A list of formulas used for the various models. Typically the `get_varaible_sets()` function will provide reasonable defaults.
-* `min_set_size` - The minimum (as a percentage) size of any dataset to train a model.
+* `min_set_size` - The minimum (as a percentage) size of any dataset to train a model. The default is 10%.
 * `exclusive_membership` - If `TRUE`, any observation will be used in exactly one model.
-* `...` - Other parameters passed to the `method` function.
+* `...` - Other parameters passed to the `method` function. Default is `FALSE`.
 ]
 
 .pull-right[
@@ -521,7 +528,7 @@ knitr::kable(overall,
              row.names = FALSE,
              digits = 2) |>
   kableExtra::add_footnote(
-    paste0('Improvement is the difference with the overall retention rate of ', 
+    paste0('Improvement is the difference with the overall base retention rate of ', 
            round(100*null_accuracy, digits = 3), '%.'),
     notation = 'none')
 ```
@@ -574,8 +581,6 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 ### Miscellaneous
 
 * [Downsampling](https://jbryer.github.io/medley/articles/downsampling.html) - the `downsampling()` function is designed for situations where there is significant imbalance in you dependent variable.
-
-* Yet another confusion matrix function [`confusion_matrix`](https://jbryer.github.io/medley/reference/confusion_matrix.html).
 
 * [`recode_small_levels()`](https://jbryer.github.io/medley/reference/recode_small_levels.html) is a utility function that will find rarely used factor levels and recode them.
 
