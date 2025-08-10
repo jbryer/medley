@@ -5,12 +5,13 @@
 \alias{summary.medley}
 \alias{print.medley}
 \alias{predict.medley}
+\alias{fit.medley}
 \title{Train models using different combinations of predictor variables based upon
 missing data patterns.}
 \usage{
 medley(
-  data,
   formula,
+  data,
   method = glm,
   var_sets = get_variable_sets(data = data, formula = formula, min_set_size =
     min_set_size),
@@ -24,11 +25,13 @@ medley(
 \method{print}{medley}(x, ...)
 
 \method{predict}{medley}(object, newdata, ...)
+
+\method{fit}{medley}(object, ...)
 }
 \arguments{
-\item{data}{data.frame used to estimate the models.}
-
 \item{formula}{with all possible predictor varaibles to be considered.}
+
+\item{data}{data.frame used to estimate the models.}
 
 \item{method}{the function used to train the models (e.g. glm, randomForest).}
 
@@ -38,9 +41,10 @@ medley(
 
 \item{exclusive_membership}{whether an observation should only be used only in
 the model for which the most predictor variables are available. If
-`FALSE` then observations may be used in training more than one model.}
+`FALSE` then observations may be used in training more than one model.
+This is experimental.}
 
-\item{...}{other parameters passed to the `predict()` function.}
+\item{...}{other parameters passed to the `fit()` function.}
 
 \item{object}{the results from `medley`.}
 
@@ -59,8 +63,39 @@ an object with the following elements:
 }
 
 a vector of predictions.
+
+a vector of fitted values.
 }
 \description{
-Train models using different combinations of predictor variables based upon
-missing data patterns.
+This function will train a collection of models based upon the pattern of missingness.
+Each observation will be used in the model with most dependent variables available. For example,
+consider the following data.frame where `y` is the dependent variable, `x` represents an observed
+value, and `NA` indicates a missing value:
+}
+\details{
+```
+ID Y Var1 Var2 Var3
+ 1 x    x    x    x
+ 2 x    x    x   NA
+ 3 x    x   NA   NA
+```
+
+We can train three different models:
+
+* Model 1: Y ~ Var1 + Var2 + Var3
+* Model 2: Y ~ Var1 + Var2
+* Model 3: Y ~ Var1
+
+When deciding what model each observation will be used in is determined by examining which model
+has the most dependent variables that row has values for. In the example above, row 1 would
+be used with model 1, row 2 would be used with model 2, and row 3 would be used with model 3.
+
+If `exclusive_membership = FALSE` then row 1 would be used in all 3 models and row 2 would be
+used in models 2 and 3. I do recommend using this parameter with caution as model assumptions
+are not confirmed, especially independence.
+}
+\examples{
+formulas <- medley::get_variable_sets(daacs, retained ~ .)
+medley_out <- medley(data = daacs, formula = retained ~ ., var_sets = formulas)
+predicted_values <- predict(medley_out)
 }

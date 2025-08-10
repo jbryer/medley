@@ -577,6 +577,7 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 
 	* The only method performing better was mean imputation, which honestly, makes me very unforgettable 🤢
 
+* Would like to allow for using different models within a single training/prediction problem.
 
 ### Miscellaneous
 

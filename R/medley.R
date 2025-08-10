@@ -1,6 +1,31 @@
 #' Train models using different combinations of predictor variables based upon
 #' missing data patterns.
 #'
+#' This function will train a collection of models based upon the pattern of missingness.
+#' Each observation will be used in the model with most dependent variables available. For example,
+#' consider the following data.frame where `y` is the dependent variable, `x` represents an observed
+#' value, and `NA` indicates a missing value:
+#'
+#' ```
+#' ID Y Var1 Var2 Var3
+#'  1 x    x    x    x
+#'  2 x    x    x   NA
+#'  3 x    x   NA   NA
+#' ```
+#'
+#' We can train three different models:
+#'
+#' * Model 1: Y ~ Var1 + Var2 + Var3
+#' * Model 2: Y ~ Var1 + Var2
+#' * Model 3: Y ~ Var1
+#'
+#' When deciding what model each observation will be used in is determined by examining which model
+#' has the most dependent variables that row has values for. In the example above, row 1 would
+#' be used with model 1, row 2 would be used with model 2, and row 3 would be used with model 3.
+#'
+#' If `exclusive_membership = FALSE` then row 1 would be used in all 3 models and row 2 would be
+#' used in models 2 and 3. I do recommend using this parameter with caution as model assumptions
+#' are not confirmed, especially independence.
 #'
 #' @param data data.frame used to estimate the models.
 #' @param formula with all possible predictor varaibles to be considered.
@@ -10,6 +35,7 @@
 #' @param exclusive_membership whether an observation should only be used only in
 #'        the model for which the most predictor variables are available. If
 #'        `FALSE` then observations may be used in training more than one model.
+#'        This is experimental.
 #' @param ... other parameters passed to `method` function.
 #' @return an object with the following elements:
 #' \describe{
@@ -21,9 +47,13 @@
 #' }
 #' @importFrom ComplexHeatmap make_comb_mat
 #' @export
+#' @examples
+#' formulas <- medley::get_variable_sets(daacs, retained ~ .)
+#' medley_out <- medley(data = daacs, formula = retained ~ ., var_sets = formulas)
+#' predicted_values <- predict(medley_out)
 medley <- function(
-		data,
 		formula,
+		data,
 		method = glm,
 		var_sets = get_variable_sets(data = data, formula = formula, min_set_size = min_set_size),
 		min_set_size = 0.1, # TODO: May want to consider raw n instead of percentage
@@ -40,6 +70,7 @@ medley <- function(
 	results$data <- data
 	results$n_models <- length(var_sets)
 	results$messages <- character()
+	results$exclusive_membership <- exclusive_membership
 
 	obs_membership <- matrix(FALSE,
 							 ncol = length(var_sets),
@@ -156,11 +187,39 @@ predict.medley <- function(object, newdata, ...) {
 	# TODO: Currently predictions are only provided from the first model (i.e. the
 	# one with the most variables). Perhaps allow for weighted averages based upon
 	# model fit.
+	if(object$exclusive_membership) {
+		warning('Predictions will be returned from the first model only.')
+	}
+
 	for(i in rev(seq_len(length(object$models)))) {
 		model <- object$models[[i]]
 		f <- object$formulas[[i]]
 		rows <- apply(shadow_matrix[,all.vars(f)], 1, FUN = all)
 		predictions[rows] <- predict(model, newdata = newdata[rows,], ...)
 	}
+
 	return(predictions)
+}
+
+#' @rdname medley
+#' @param object the results from `medley`.
+#' @param ... other parameters passed to the `fit()` function.
+#' @return a vector of fitted values.
+#' @method fit medley
+#' @importFrom generics fit
+fit.medley <- function(object, ...) {
+	fitted <- rep(NA_real_, nrow(object$data))
+
+	# TODO: Currently fitted are only provided from the first model (i.e. the
+	# one with the most variables). Perhaps allow for weighted averages based upon
+	# model fit.
+	if(object$exclusive_membership) {
+		warning('Fitted values will be returned from the first model only.')
+	}
+
+	for(i in rev(seq_len(length(object$models)))) {
+		fitted[object$model_observations[,i]] <- fit(object$models[[i]])
+	}
+
+	return(fitted)
 }
