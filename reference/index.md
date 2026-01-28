@@ -33,7 +33,6 @@
   combinations of predictor variables based upon missing data patterns.
 - [`accuracy()`](metrics.md) [`sensitivity()`](metrics.md)
   [`specificity()`](metrics.md) : Calculate the accuracy rate.
-- [`nhis`](nhis.md) : National Health Interview Survey (NHIS) 2017
 - [`pisa`](pisa.md) : Programme of International Student Assessment
 - [`pisa_variables`](pisa_variables.md) : Programme of International
   Student Assessment
