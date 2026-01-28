@@ -29,13 +29,36 @@ null_accuracy <- mean(daacs$retained)
 
 # Introduction
 
-Most predictive modeling strategies require complete data to train and predict outcomes. A common strategy is to impute the missing data before training the models. However, in many situations, missing data occurs in a systematic way therefore violating the missing completely at random (MCAR) assumption. For instance, data may be collected over multiple time periods or the available data may vary depending on varying collection protocols or selection bias at the individual level. The `medley` package provides a framework for estimating predictive model that takes into account the patterns of missing data.
+Most predictive modeling strategies require complete data to train and predict outcomes. A common strategy is to impute the missing data before training the models. However, in many situations, missing data occurs systematically which violates the missing completely at random (MCAR) assumption. For instance, data may be collected over multiple time periods or the available data may vary depending on varying collection protocols or selection bias at the individual level. The `medley` package provides a framework for estimating predictive model that takes into account the patterns of missing data.
 
 The motivating example for this approach predictive modeling comes from predicting student success in college. Institutions have become increasingly interested in using predictive models to identify students at risk for attrition as early as possible in order to provided targeted interventions and supports. Information about students is collected over several months beginning at the college application phase, commitment to enroll, orientation, and finally behavior data as the student begins coursework. In addition to missing data being related to where the student is in the process, students may opt to not provide certain data elements. This results in a complex system where a single predictive model is appropriate.
 
+# Strategy for Predictive Modeling with Missing Data
+
+Consider a data frame with eight observations of five variables as represented in Figure \@ref(fig:framework-data). Rows 3, 7, and 8 have no missing data; row 1 is missing a value for variable 3; rows 2 and 5 are missing values in variables 2 and 3; and rows 4 and 6 are missing values in variables 3, 4, and 5.
+
+```{r framework-data, echo=FALSE, fig.cap='Sample data frame with missing data.', out.width='90%'}
+knitr::include_graphics('medley_data.png')
+```
+
+The first step of the `medley` algorithm is to determine the pattern of missingness. If we convert the data frame to a shadow matrix where zero indicates a missing value and one indicates the value is observed, we can compute the distribution of the number of observations for each combination of observed and missing values. Figure \@ref(fig:framework-upset) is an upset plot [@ComplexHeatmap] where the dots indicate that the corresponding variable was observed and the bars the size of that set. In this example, there are three observations where there is no missingness; one row where variable 3 is missing; two observations where variables 2 and 3 are missing; and two observations where variables 3, 4, and 5 are missing.
+
+```{r framework-upset, echo=FALSE, fig.cap='Upset plot representing the pattern of missingness.', out.widht='90%'}
+knitr::include_graphics('medley_upset.png')
+```
+
+Since we need at least two observations to train a predictive model, the maximum number of models we can train is three, as represented in Figure \@ref(fig:framework-models). Note that for observation 1 which was missing variable 3 is included in the model 2 since that is the next model that includes the most variables. One of the important parameters to the `medley` algorithm is the minimum sample size for a model to be considered. The default is 10% of the total sample size, however for very large data sets it may be more appropriate to set this parameter to a specific *n*.
+
+```{r framework-models, echo=FALSE, fig.cap='Data frame organized by predictive model.', out.width = '90%'}
+knitr::include_graphics('medley_models.png')
+```
+
+The order of models is important for both training and predicting since observations will be assigned to a model with the most number of variables observed. For example, when making a prediction for an observation where variable 2 is missing, model 2 would be used. For an observation that is missing variable 5, model 3 would be used since that is the only model trained without variable 5 as a dependent variable. 
+
+
 # Data Source
 
-This paper will explore data from the Diagnostic Assessment and Achievement of College Skills (DAACS; https://daacs.net). DAACS is a suite of technological and social supports designed to optimize student learning. Students complete assessments in self-regulated learning, writing, mathematics, and reading and upon completion receive immediate feedback in terms of developing, emerging, and mastering. The feedback is tailored to their results. The data for this paper was part of a larger randomized control trial where DAACS was embedded within orientation for the treatment students. Although students were instructed that orientation was required, there were no consequences for not completing orientation and therefore approximately `r round(mean(is.na(daacs$srl)) * 100)`% of students did not attempt orientation, and therefore did not complete DAACS. The goal is to predicted term-to-term retention (the `retained` variable) for each student based upon the available data. Table \@ref(tab:descriptives) for descriptive statistics which reveals that the DAACS results are not complete for some students. The overall retention rate is `r round(null_accuracy * 100, digits = 2)`%.
+The Diagnostic Assessment and Achievement of College Skills (DAACS; https://daacs.net). DAACS is a suite of technological and social supports designed to optimize student learning. Students complete assessments in self-regulated learning, writing, mathematics, and reading and upon completion receive immediate feedback in terms of developing, emerging, and mastering. The feedback is tailored to their results. The data for this paper was part of a larger randomized control trial where DAACS was embedded within orientation for the treatment students. Although students were instructed that orientation was required, there were no consequences for not completing orientation and therefore approximately `r round(mean(is.na(daacs$srl)) * 100)`% of students did not attempt orientation, and therefore did not complete any DAACS assessments. One of the primary research goals of the original study was whether the addition of DAACS data would increase the accuracy of prediction term-to-term retention (the `retained` variable). Table \@ref(tab:descriptives) for descriptive statistics which reveals that the DAACS results are not complete for some students. The overall retention base rate is `r round(null_accuracy * 100, digits = 2)`%.
 
 ```{r descriptives, echo=FALSE, warning=FALSE, message=FALSE, results='kable'}
 # vtable::sumtable(daacs, title = 'Summary Statistics')

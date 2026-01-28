@@ -1,14 +1,14 @@
 Type: Package
 Package: medley
 Title: Predictive Modeling with Missing Data
-Version: 0.9.4
-Date: 2025-08-08
+Version: 1.0.0
+Date: 2026-01-27
 Authors@R: 
     person("Jason", "Bryer", , "jason@bryer.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-2454-0402"))
-Description: Functions to train predictive models based upon missing data
-    patterns. Predictions are made using models that have the least
-    missingness.
+Description: Routines to estimate prediction models when there are systematic patterns to missing
+    data. Utility functions are provided to explore the patterns of missingness and to help
+    determine the set of models used for training and predicting.
 License: GPL (>= 3)
 URL: https://github.com/jbryer/medley/
 BugReports: https://github.com/jbryer/medley/issues
@@ -23,19 +23,20 @@ Imports:
     reshape2,
     stats
 Suggests: 
-    bookdown,
     kableExtra,
     knitr,
     mice,
-    multilevelPSA,
     randomForest,
     rmarkdown,
     splitstackshape,
     vtable
+Enhances:
+    bookdown,
+    multilevelPSA
 VignetteBuilder: 
     knitr
 biocViews:
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

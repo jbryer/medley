@@ -12,3 +12,5 @@ articles/
 man/figures/fruit_medley.*
 vignettes/downsampling_cache/
 slides/
+cran-comments.md
+manuscript/
