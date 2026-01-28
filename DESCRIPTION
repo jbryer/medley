@@ -26,13 +26,13 @@ Suggests:
     kableExtra,
     knitr,
     mice,
+    multilevelPSA,
     randomForest,
     rmarkdown,
     splitstackshape,
     vtable
 Enhances:
-    bookdown,
-    multilevelPSA
+    bookdown
 VignetteBuilder: 
     knitr
 biocViews:
