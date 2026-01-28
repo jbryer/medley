@@ -23,6 +23,7 @@ Imports:
     reshape2,
     stats
 Suggests: 
+    bookdown,
     kableExtra,
     knitr,
     mice,
@@ -31,8 +32,6 @@ Suggests:
     rmarkdown,
     splitstackshape,
     vtable
-Enhances:
-    bookdown
 VignetteBuilder: 
     knitr
 biocViews:
