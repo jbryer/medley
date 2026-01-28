@@ -1,0 +1,105 @@
+# [![](reference/figures/medley.png)](https://github.com/jbryer/medley) medley: Predictive Modeling with Missing Data
+
+**Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
+**Website:** <https://jbryer.github.io/medley/>
+
+[Slides from useR! 2025
+conference](https://github.com/jbryer/medley/blob/master/slides/medley_useR_2025.pdf)
+
+Most predictive modeling strategies require there to be no missing data
+for model estimation. When there is missing data, there are generally
+two strategies for working with missing data: 1.) exclude the variables
+(columns) or observations (rows) where there is missing data; or 2.)
+impute the missing data. However, data is often missing in systematic
+ways. Excluding data from training is ignoring potentially predictive
+information and for many imputation procedures the missing completely at
+random (MCAR) assumption is violated.
+
+The `medley` package implements a solution to modeling when there are
+systematic patterns of missingness. A working example of predicting
+student retention from a larger study of the Diagnostic Assessment and
+Achievement of College Skills (DAACS) will be explored. In this study,
+demographic data was collected at enrollment from all students and then
+students completed diagnostic assessments in self-regulated learning
+(SRL), writing, mathematics, and reading during their first few weeks of
+the semester. Although all students were expected to complete DAACS,
+there were no consequence and therefore a large percentage of student
+completed none or only some of the assessments. The resulting dataset
+has three predominate response patterns: 1.) students who completed all
+four assessments, 2.) students who completed only the SRL assessment,
+and 3). students who did not complete any of the assessments.
+
+The goal of the `medley` algorithm is to take advantage of missing data
+patterns. For this example, the medley algorithm trained three
+predictive models: 1.) demographics plus all four assessments, 2.)
+demographics plus SRL assessment, and 3.) demographics only. For both
+training and prediction, the model used for each student is based upon
+what data is available. That is, if a student only completed SRL, model
+2 would be used. The `medley` algorithm can be used with most
+statistical models. For this study, both logistic regression and random
+forest are used. The accuracy of the `medley` algorithm was 3.5% better
+than using only the complete data and 3.1% better than using a dataset
+where missing data was imputed using the `mice` package.
+
+The `medley` package provides an approach for predictive modeling using
+the same training and prediction framework R users are accustomed to
+using. There are numerous parameters that can be modified including what
+underlying statistical models are used for training. Additional
+diagnostic functions are available to explore missing data patterns.
+
+## Installation
+
+You can install the development version of medley like so:
+
+``` r
+remotes::install_github('jbryer/medley')
+```
+
+# Package index
+
+## All functions
+
+- [`bank`](bank.md) : Bank Marketing
+- [`calculate_roc()`](calculate_roc.md)
+  [`summary(`*`<roc>`*`)`](calculate_roc.md)
+  [`plot(`*`<roc>`*`)`](calculate_roc.md) : Calculate the statistics for
+  receiver operating characteristic curve
+- [`combine_confusion_matrices()`](combine_confusion_matrices.md) :
+  Combine multiple confusion matrices into a single table.
+- [`confusion_matrix()`](confusion_matrix.md)
+  [`as.data.frame(`*`<confusionmatrix>`*`)`](confusion_matrix.md)
+  [`print(`*`<confusionmatrix>`*`)`](confusion_matrix.md) : Calculate a
+  confusion matrix
+- [`crosstab()`](crosstab.md) : Contingency and proportional table as a
+  character
+- [`daacs`](daacs.md) : Data from the Diagnostic Assessment and
+  Achievement of College Skills (DAACS)
+- [`downsample()`](downsample.md)
+  [`predict(`*`<downsample>`*`)`](downsample.md) : Model training using
+  downsampling.
+- [`expand_formula()`](expand_formula.md) : Utility function that will
+  expand the formula if the independent variable(s) are not full
+  specified.
+- [`get_variable_sets()`](get_variable_sets.md)
+  [`print(`*`<variableset>`*`)`](get_variable_sets.md) : Gets list of
+  model formulas based upon the missing data pattern in the data set.
+- [`medley()`](medley.md) [`summary(`*`<medley>`*`)`](medley.md)
+  [`print(`*`<medley>`*`)`](medley.md)
+  [`predict(`*`<medley>`*`)`](medley.md)
+  [`fit(`*`<medley>`*`)`](medley.md) : Train models using different
+  combinations of predictor variables based upon missing data patterns.
+- [`accuracy()`](metrics.md) [`sensitivity()`](metrics.md)
+  [`specificity()`](metrics.md) : Calculate the accuracy rate.
+- [`nhis`](nhis.md) : National Health Interview Survey (NHIS) 2017
+- [`pisa`](pisa.md) : Programme of International Student Assessment
+- [`pisa_variables`](pisa_variables.md) : Programme of International
+  Student Assessment
+- [`recode_small_levels()`](recode_small_levels.md) : Recode levels of a
+  factor that are below a given threshold.
+
+# Articles
+
+### All vignettes
+
+- [Downsampling for Predictive Modeling](downsampling.md):
+- [medley: Predictive Modeling with Missing Data](medley.md):
