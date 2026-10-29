@@ -40,8 +40,8 @@ public-to-private schools varies from 1-to-1 to 14-to-1. Figure
 values from a logistic regression with varying ratios of
 public-to-private schools. That is, all private school students were
 used in every model. For the 1-to-1 model, the first 345 public school
-observations, then for the 2-to-1 model the first observations, etcetera
-until the final model uses all observations. The vertical lines
+observations, then for the 2-to-1 model the first 690 observations,
+etcetera until the final model uses all observations. The vertical lines
 correspond to the median fitted values. With all else equal, as the
 ratio of public-to-private schools increases, the range of fitted values
 shrinks towards the majority group.[^2]
