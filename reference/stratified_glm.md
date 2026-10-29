@@ -1,14 +1,11 @@
 # Stratified Generalized Linear Models
 
-Stratified Generalized Linear Models
-
-Summary function for stratified logistic regression.
-
-Get fitted values for stratified logistic regression.
-
-Get predictions for stratified logistic regression.
-
-Plot function for stratified logistic regression.
+This modeling approach subdivides the majority class into strata of size
+of the minority class, times a ratio (which is 1 by default). The models
+are combined using the same technique for combining multiple imputed
+data sets in order to not decrease standard error estimates with
+artificially large sample sizes. See stratified_glm vignette for more
+details.
 
 ## Usage
 
@@ -16,8 +13,8 @@ Plot function for stratified logistic regression.
 stratified_glm(
   formula,
   data,
-  ratio = 2,
-  family = binomial(link = "logit"),
+  ratio = 1,
+  family = stats::binomial(link = "logit"),
   ...
 )
 

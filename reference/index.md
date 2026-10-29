@@ -2,6 +2,8 @@
 
 ## All functions
 
+- [`MIcombineP()`](MIcombineP.md) : Calculate p-values from
+  \[mitools::MIcombine()\] object. This is an internal function.
 - [`bank`](bank.md) : Bank Marketing
 - [`calculate_roc()`](calculate_roc.md)
   [`summary(`*`<roc>`*`)`](calculate_roc.md)
@@ -46,3 +48,5 @@
   [`predict(`*`<stratified.glm>`*`)`](stratified_glm.md)
   [`plot(`*`<stratified.glm>`*`)`](stratified_glm.md) : Stratified
   Generalized Linear Models
+- [`stratified_split()`](stratified_split.md) : Create stratified data
+  sets for modeling training and validation.

@@ -8,6 +8,7 @@
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
+<url><loc>/reference/MIcombineP.html</loc></url>
 <url><loc>/reference/bank.html</loc></url>
 <url><loc>/reference/calculate_roc.html</loc></url>
 <url><loc>/reference/combine_confusion_matrices.html</loc></url>
@@ -25,5 +26,6 @@
 <url><loc>/reference/pisa_variables.html</loc></url>
 <url><loc>/reference/recode_small_levels.html</loc></url>
 <url><loc>/reference/stratified_glm.html</loc></url>
+<url><loc>/reference/stratified_split.html</loc></url>
 </urlset>
 
