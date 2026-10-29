@@ -43,7 +43,7 @@ knitr::include_graphics('medley_data.png')
 
 The first step of the `medley` algorithm is to determine the pattern of missingness. If we convert the data frame to a shadow matrix where zero indicates a missing value and one indicates the value is observed, we can compute the distribution of the number of observations for each combination of observed and missing values. Figure \@ref(fig:framework-upset) is an upset plot [@ComplexHeatmap] where the dots indicate that the corresponding variable was observed and the bars the size of that set. In this example, there are three observations where there is no missingness; one row where variable 3 is missing; two observations where variables 2 and 3 are missing; and two observations where variables 3, 4, and 5 are missing.
 
-```{r framework-upset, echo=FALSE, fig.cap='Upset plot representing the pattern of missingness.', out.widht='90%'}
+```{r framework-upset, echo=FALSE, fig.cap='Upset plot representing the pattern of missingness.', out.width='90%'}
 knitr::include_graphics('medley_upset.png')
 ```
 

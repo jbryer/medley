@@ -583,7 +583,7 @@ In this case, it turns out to not help increase accuracy, in part because we kno
 
 * [Downsampling](https://jbryer.github.io/medley/articles/downsampling.html) - the `downsampling()` function is designed for situations where there is significant imbalance in you dependent variable.
 
-* [`recode_small_levels()`](https://jbryer.github.io/medley/reference/recode_small_levels.html) is a utility function that will find rarely used factor levels and recode them.
+* [`recode_small_levels()`](https://medley.bryer.org/reference/recode_small_levels.html) is a utility function that will find rarely used factor levels and recode them.
 
 
 ---
@@ -592,7 +592,7 @@ class: inverse, right, middle, hide-logo, font130
 .left-column[
 
 ```{r qrcode, echo=FALSE, out.width='100%', out.height='100%', fig.width=4, fig.height=4}
-qrcode::qr_code('https://github.com/jbryer/medley', 'M') |> plot(col = c('#005DAC', 'white'))
+qrcode::qr_code('medley.bryer.org', 'M') |> plot(col = c('#005DAC', 'white'))
 ```
 
 ]

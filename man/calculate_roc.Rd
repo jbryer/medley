@@ -10,7 +10,13 @@ calculate_roc(predictions, observed, cost_of_fp = 1, cost_of_fn = 1, n = 100)
 
 \method{summary}{roc}(object, digits = 3, ...)
 
-\method{plot}{roc}(x, curve = "accuracy", legend.position = c(1, 0.2), ...)
+\method{plot}{roc}(
+  x,
+  curve = "accuracy",
+  legend.theme = ggplot2::theme(legend.position = "none"),
+  digits = 2,
+  ...
+)
 }
 \arguments{
 \item{predictions}{predicted values.}
@@ -25,20 +31,35 @@ calculate_roc(predictions, observed, cost_of_fp = 1, cost_of_fn = 1, n = 100)
 
 \item{object}{result of [calculate_roc()].}
 
-\item{digits}{number of digits to print.}
+\item{digits}{the number of digits to print.}
 
-\item{...}{currently unused.}
+\item{...}{currently not used.}
 
 \item{x}{result of [calculate_roc()].}
 
-\item{curve}{values can be cost, accuracy, or NULL.}
+\item{curve}{values can be `cost`, `accuracy`, or `NULL`.}
 
-\item{legend.position}{position of the legend for teh accuracy curve plot.}
+\item{legend.theme}{[ggplot2::theme()] elements used to define the
+positioning of the legend.}
 }
 \value{
 a ggplot2 expression.
 }
 \description{
+This function
+}
+\examples{
+data('pisa', package = 'medley')
+ggplot2::theme_set(ggplot2::theme_minimal())
+lr_out <- glm(Public ~ ., data = pisa, family = binomial(link = 'logit'))
+roc <- medley::calculate_roc(
+    predictions = fitted(lr_out),
+    observed = pisa$Public
+)
+summary(roc)
+plot(roc)
+}
+\references{
 This function was adapted from Raffel (https://github.com/joyofdata):
 https://github.com/joyofdata/joyofdata-articles/blob/master/roc-auc/calculate_roc.R
 }

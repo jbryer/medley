@@ -161,9 +161,10 @@ summary.medley <- function(object, ...) {
 }
 
 #' @rdname medley
-#' @method print medley
 #' @param x the results of `medley`.
 #' @param ... currently not used.
+#' @method print medley
+#' @export
 print.medley <- function(x, ...) {
 	summary(x, ...)
 }
@@ -205,8 +206,9 @@ predict.medley <- function(object, newdata, ...) {
 #' @param object the results from `medley`.
 #' @param ... other parameters passed to the `fit()` function.
 #' @return a vector of fitted values.
-#' @method fit medley
 #' @importFrom generics fit
+#' @export
+#' @method fit medley
 fit.medley <- function(object, ...) {
 	fitted <- rep(NA_real_, nrow(object$data))
 

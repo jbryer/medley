@@ -2,13 +2,15 @@ Type: Package
 Package: medley
 Title: Predictive Modeling with Missing Data
 Version: 1.0.0
-Date: 2026-01-27
+Date: 2026-10-29
 Authors@R: 
     person("Jason", "Bryer", , "jason@bryer.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-2454-0402"))
-Description: Routines to estimate prediction models when there are systematic patterns to missing
-    data. Utility functions are provided to explore the patterns of missingness and to help
-    determine the set of models used for training and predicting.
+Description: Routines to estimate prediction models when there are
+    systematic patterns to missing data. Utility functions are provided to
+    explore the patterns of missingness and to help determine the set of
+    models used for training and predicting.
+    <https://medley.bryer.org/articles/medley.html>
 License: GPL (>= 3)
 URL: https://github.com/jbryer/medley/
 BugReports: https://github.com/jbryer/medley/issues
@@ -30,6 +32,7 @@ Suggests:
     multilevelPSA,
     randomForest,
     rmarkdown,
+    sf,
     splitstackshape,
     vtable
 VignetteBuilder: 
@@ -38,4 +41,4 @@ biocViews:
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.0

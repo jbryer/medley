@@ -15,3 +15,5 @@ slides/
 cran-comments.md
 manuscript/
 ^CRAN-SUBMISSION$
+^\.positai$
+^\.claude$
