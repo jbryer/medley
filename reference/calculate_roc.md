@@ -1,7 +1,6 @@
 # Calculate the statistics for receiver operating characteristic curve
 
-This function was adapted from Raffel (https://github.com/joyofdata):
-https://github.com/joyofdata/joyofdata-articles/blob/master/roc-auc/calculate_roc.R
+This function
 
 ## Usage
 
@@ -12,7 +11,13 @@ calculate_roc(predictions, observed, cost_of_fp = 1, cost_of_fn = 1, n = 100)
 summary(object, digits = 3, ...)
 
 # S3 method for class 'roc'
-plot(x, curve = "accuracy", legend.position = c(1, 0.2), ...)
+plot(
+  x,
+  curve = "accuracy",
+  legend.theme = ggplot2::theme(legend.position = "none"),
+  digits = 2,
+  ...
+)
 ```
 
 ## Arguments
@@ -43,11 +48,11 @@ plot(x, curve = "accuracy", legend.position = c(1, 0.2), ...)
 
 - digits:
 
-  number of digits to print.
+  the number of digits to print.
 
 - ...:
 
-  currently unused.
+  currently not used.
 
 - x:
 
@@ -55,12 +60,38 @@ plot(x, curve = "accuracy", legend.position = c(1, 0.2), ...)
 
 - curve:
 
-  values can be cost, accuracy, or NULL.
+  values can be \`cost\`, \`accuracy\`, or \`NULL\`.
 
-- legend.position:
+- legend.theme:
 
-  position of the legend for teh accuracy curve plot.
+  \[ggplot2::theme()\] elements used to define the positioning of the
+  legend.
 
 ## Value
 
 a ggplot2 expression.
+
+## References
+
+This function was adapted from Raffel (https://github.com/joyofdata):
+https://github.com/joyofdata/joyofdata-articles/blob/master/roc-auc/calculate_roc.R
+
+## Examples
+
+``` r
+data('pisa', package = 'medley')
+ggplot2::theme_set(ggplot2::theme_minimal())
+lr_out <- glm(Public ~ ., data = pisa, family = binomial(link = 'logit'))
+roc <- medley::calculate_roc(
+    predictions = fitted(lr_out),
+    observed = pisa$Public
+)
+summary(roc)
+#> AUC = 0.814
+#> Cost of false-positive = 1
+#> Cost of false-negative = 1
+#> Threshold with minimum cost = 0.444 (accuracy = 93.4%)
+#> Threshold with maximum accuracy = 0.444 (accuracy = 93.4%)
+#> Sensitivity and specificity intersection = 0.927 (accuracy = 73.1%)
+plot(roc)
+```

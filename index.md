@@ -1,7 +1,7 @@
 # [![](reference/figures/medley.png)](https://github.com/jbryer/medley) medley: Predictive Modeling with Missing Data
 
 **Author:** Jason Bryer, Ph.D. <jason@bryer.org>  
-**Website:** <https://jbryer.github.io/medley/>
+**Website:** <https://medley.bryer.org/>
 
 [Slides from useR! 2025
 conference](https://github.com/jbryer/medley/blob/master/slides/medley_useR_2025.pdf)
@@ -52,5 +52,6 @@ diagnostic functions are available to explore missing data patterns.
 You can install the development version of medley like so:
 
 ``` r
+
 remotes::install_github('jbryer/medley')
 ```

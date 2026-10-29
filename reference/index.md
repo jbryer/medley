@@ -23,6 +23,8 @@
 - [`expand_formula()`](expand_formula.md) : Utility function that will
   expand the formula if the independent variable(s) are not full
   specified.
+- [`find_path_intersections()`](find_path_intersections.md) : Find the x
+  and y coordinates where two paths intersect.
 - [`get_variable_sets()`](get_variable_sets.md)
   [`print(`*`<variableset>`*`)`](get_variable_sets.md) : Gets list of
   model formulas based upon the missing data pattern in the data set.
@@ -38,3 +40,9 @@
   Student Assessment
 - [`recode_small_levels()`](recode_small_levels.md) : Recode levels of a
   factor that are below a given threshold.
+- [`stratified_glm()`](stratified_glm.md)
+  [`summary(`*`<stratified.glm>`*`)`](stratified_glm.md)
+  [`fitted(`*`<stratified.glm>`*`)`](stratified_glm.md)
+  [`predict(`*`<stratified.glm>`*`)`](stratified_glm.md)
+  [`plot(`*`<stratified.glm>`*`)`](stratified_glm.md) : Stratified
+  Generalized Linear Models

@@ -23,6 +23,7 @@ can then pool the predictions across the nine models.
 ## Working Example
 
 ``` r
+
 library(medley)
 data('pisa', package = 'medley')
 data('pisa_variables', package = 'medley')
@@ -47,6 +48,7 @@ function to ensure that the ratio of public-to-private school students
 is the same in both datasets.
 
 ``` r
+
 pisa_formu <- Public ~ .
 names(pisa) <- pisa_variables[names(pisa)]
 pisa_splits <- splitstackshape::stratified(
@@ -56,6 +58,7 @@ pisa_valid <- pisa_splits[[2]] |> as.data.frame()
 ```
 
 ``` r
+
 table(pisa$Public, useNA = 'ifany') |> print() |> prop.table()
 #> 
 #> FALSE  TRUE 
@@ -83,6 +86,7 @@ We can estimate a logistic regression model and get the predicted
 probabilities for the validation dataset.
 
 ``` r
+
 pisa_lr_out <- glm(pisa_formu, data = pisa_train, family = binomial(link = 'logit'))
 pisa_predictions <- predict(pisa_lr_out, newdata = pisa_valid, type = 'response')
 ```
@@ -93,6 +97,7 @@ private school students, but the densities are clearly centered to the
 right side of the range.
 
 ``` r
+
 ggplot(data.frame(Public = pisa_valid$Public, 
                   Prediction = pisa_predictions), 
        aes(x = Prediction, color = Public)) +
@@ -105,6 +110,7 @@ The figure below provides a receiver operator characteristic (ROC) curve
 along with a plot of the accuracy, sensitivity, and specificity.
 
 ``` r
+
 calculate_roc(predictions = pisa_predictions, 
               observed = pisa_valid$Public) |> plot()
 ```
@@ -117,6 +123,7 @@ is no better than the null model (i.e percent public school students is
 *specificity* or *sensitivity*.
 
 ``` r
+
 confusion_matrix(observed = pisa_valid$Public, 
                  predicted = pisa_predictions > 0.5)
 #>            predicted              
@@ -174,6 +181,7 @@ observations. Given there are 3925 observations in our training set, the
 `dowmsample()` function will estimate 7 models.
 
 ``` r
+
 pisa_ds_out <- downsample(
   formu = pisa_formu,
   data = pisa_train,
@@ -184,6 +192,7 @@ pisa_ds_out <- downsample(
 ```
 
 ``` r
+
 length(pisa_ds_out)
 #> [1] 7
 ```
@@ -193,6 +202,7 @@ function to get a data frame of predictions. Each column corresponds to
 the predicted value for each of the 7 models.
 
 ``` r
+
 pisa_predictions_ds <- predict(pisa_ds_out,
                                newdata = pisa_valid, 
                                type = 'response')
@@ -209,6 +219,7 @@ head(pisa_predictions_ds)
 We can average the predictions to get a single vector.
 
 ``` r
+
 pisa_predictions_ds2 <- pisa_predictions_ds |> apply(1, mean)
 ```
 
@@ -218,6 +229,7 @@ though we did use all the observations to get these predicted
 probabilities.
 
 ``` r
+
 ggplot(data.frame(Public = pisa_valid$Public, 
                   Prediction = pisa_predictions_ds2), 
        aes(x = Prediction, color = Public)) +
@@ -232,6 +244,7 @@ values, the model performance metrics provided below suggest that it did
 not improve the overall performance of the model predictions.
 
 ``` r
+
 roc <- calculate_roc(predictions = pisa_predictions_ds2, 
                      observed = pisa_valid$Public)
 plot(roc)
@@ -240,6 +253,7 @@ plot(roc)
 ![](downsampling_files/figure-html/unnamed-chunk-16-1.png)
 
 ``` r
+
 confusion_matrix(observed = pisa_valid$Public, 
                  predicted = pisa_predictions_ds2 > 0.5)
 #>               predicted              
@@ -262,77 +276,77 @@ the pooled regression coefficients from the `downsample` function along
 with the coefficients from the logistic regression model using all the
 data.
 
-|                                                                 | Pooled from downsamples |         Complete data |
-|-----------------------------------------------------------------|------------------------:|----------------------:|
-| (Intercept)                                                     |        5.516 \* (2.376) |  7.862 \*\*\* (1.657) |
-| SexMale                                                         |     -0.823 \*\* (0.244) | -0.762 \*\*\* (0.149) |
-| \`Attend \<ISCED 0\>\`Yes, one year or less                     |           0.495 (0.286) |    0.498 \*\* (0.190) |
-| \`Age at \<ISCED 1\>\`                                          |           0.087 (0.186) |         0.075 (0.104) |
-| \`Repeat \<ISCED 1\>\`Yes, once                                 |           0.693 (0.548) |         0.645 (0.345) |
-| \`At Home - Mother\`TRUE                                        |          -0.888 (0.843) |        -0.921 (0.493) |
-| \`At Home - Father\`TRUE                                        |          -0.672 (0.414) |     -0.620 \* (0.277) |
-| \`At Home - Brothers\`TRUE                                      |           0.184 (0.313) |         0.155 (0.146) |
-| \`At Home - Sisters\`TRUE                                       |        0.563 \* (0.237) |    0.454 \*\* (0.146) |
-| \`At Home - Grandparents\`TRUE                                  |       -0.725 \* (0.328) |   -0.648 \*\* (0.201) |
-| \`At Home - Others\`TRUE                                        |          -0.094 (0.332) |        -0.136 (0.221) |
-| \`Mother \<Highest Schooling\>\`\<ISCED level 3A\>              |           0.101 (0.631) |         0.070 (0.388) |
-| \`Mother Current Job Status\`Other                              |          -0.457 (0.609) |        -0.303 (0.364) |
-| \`Mother Current Job Status\`Working Full-time                  |          -0.608 (0.537) |        -0.443 (0.339) |
-| \`Mother Current Job Status\`Working Part-Time                  |          -0.586 (0.650) |        -0.446 (0.369) |
-| \`Father \<Highest Schooling\>\`\<ISCED level 2\>               |           0.072 (1.219) |         0.077 (0.832) |
-| \`Father \<Highest Schooling\>\`\<ISCED level 3A\>              |          -0.579 (1.121) |        -0.658 (0.754) |
-| \`Father Current Job Status\`Other                              |          -0.019 (0.737) |        -0.065 (0.394) |
-| \`Father Current Job Status\`Working Full-time                  |           0.356 (0.604) |         0.236 (0.324) |
-| \`Father Current Job Status\`Working Part-Time                  |           1.260 (0.892) |         0.998 (0.529) |
-| \`Language at home\`Language of test                            |           0.137 (0.489) |        -0.104 (0.263) |
-| \`Possessions desk\`TRUE                                        |          -0.583 (0.404) |     -0.531 \* (0.265) |
-| \`Possessions own room\`TRUE                                    |           0.521 (0.384) |      0.600 \* (0.238) |
-| \`Possessions study place\`TRUE                                 |          -0.056 (0.488) |        -0.223 (0.303) |
-| \`Possessions computer\`TRUE                                    |          -0.077 (0.855) |        -0.038 (0.592) |
-| \`Possessions software\`TRUE                                    |           0.365 (0.332) |      0.358 \* (0.161) |
-| \`Possessions Internet\`TRUE                                    |          -1.416 (0.917) |        -1.177 (0.602) |
-| \`Possessions literature\`TRUE                                  |       -0.619 \* (0.295) |   -0.551 \*\* (0.175) |
-| \`Possessions poetry\`TRUE                                      |          -0.369 (0.308) |        -0.250 (0.176) |
-| \`Possessions art\`TRUE                                         |          -0.402 (0.333) |        -0.273 (0.196) |
-| \`Possessions textbooks\`TRUE                                   |          -0.021 (0.356) |        -0.007 (0.214) |
-| \`Possessions dictionary\`TRUE                                  |           0.100 (0.583) |        -0.000 (0.422) |
-| \`Possessions dishwasher\`TRUE                                  |          -0.074 (0.336) |        -0.078 (0.234) |
-| \`How many cellular phones\`Three or more                       |          -0.851 (0.987) |        -0.906 (0.741) |
-| \`How many cellular phones\`Two                                 |          -0.192 (0.985) |        -0.478 (0.771) |
-| \`How many televisions\`Three or more                           |        1.378 \* (0.645) |  0.995 \*\*\* (0.302) |
-| \`How many televisions\`Two                                     |           0.816 (0.640) |         0.519 (0.324) |
-| \`How many computers\`One                                       |           0.589 (1.188) |         0.343 (0.823) |
-| \`How many computers\`Three or more                             |           0.174 (1.168) |        -0.072 (0.838) |
-| \`How many computers\`Two                                       |           0.079 (1.143) |        -0.120 (0.832) |
-| \`How many cars\`Three or more                                  |           0.038 (0.458) |        -0.041 (0.295) |
-| \`How many cars\`Two                                            |          -0.223 (0.427) |        -0.264 (0.291) |
-| \`How many rooms bath or shower\`Three or more                  |       -1.001 \* (0.427) |   -0.703 \*\* (0.238) |
-| \`How many rooms bath or shower\`Two                            |          -0.223 (0.371) |        -0.107 (0.217) |
-| \`How many books at home\`101-200 books                         |          -0.255 (0.440) |        -0.367 (0.327) |
-| \`How many books at home\`11-25 books                           |          -0.158 (0.431) |        -0.158 (0.339) |
-| \`How many books at home\`201-500 books                         |       -0.998 \* (0.477) |   -0.985 \*\* (0.334) |
-| \`How many books at home\`26-100 books                          |          -0.498 (0.395) |        -0.489 (0.302) |
-| \`How many books at home\`More than 500 books                   |          -1.082 (0.558) |   -1.042 \*\* (0.366) |
-| \`Reading Enjoyment Time\`30 minutes or less a day              |          -0.071 (0.477) |        -0.183 (0.251) |
-| \`Reading Enjoyment Time\`Between 30 and 60 minutes             |           0.494 (0.457) |         0.311 (0.283) |
-| \`Reading Enjoyment Time\`I don't read for enjoyment            |          -0.019 (0.466) |        -0.118 (0.259) |
-| \`Reading Enjoyment Time\`More than 2 hours a day               |           0.245 (0.747) |         0.208 (0.406) |
-| \`\<Enrich\> in \<test lang\>\`TRUE                             |          -0.012 (0.671) |         0.242 (0.413) |
-| \`\<Enrich\> in \<mathematics\>\`TRUE                           |          -0.236 (0.569) |        -0.276 (0.323) |
-| \`\<Enrich\> in \<science\>\`TRUE                               |           0.576 (0.634) |         0.367 (0.410) |
-| \`\<Remedial\> in \<test lang\>\`TRUE                           |           0.311 (0.964) |         0.041 (0.524) |
-| \`\<Remedial\> in \<mathematics\>\`TRUE                         |          -0.511 (0.685) |        -0.614 (0.384) |
-| \`\<Remedial\> in \<science\>\`TRUE                             |          -0.197 (0.789) |         0.245 (0.496) |
-| \`Out of school lessons \<test lang\>\`Do not attend            |          -0.279 (0.815) |        -0.106 (0.493) |
-| \`Out of school lessons \<test lang\>\`Less than 2 hours a week |          -0.685 (0.712) |        -0.533 (0.465) |
-| \`Out of school lessons \<maths\>\`4 up to 6 hours per week     |           0.237 (0.902) |         0.386 (0.541) |
-| \`Out of school lessons \<maths\>\`Do not attend                |          -0.254 (0.798) |        -0.160 (0.410) |
-| \`Out of school lessons \<maths\>\`Less than 2 hours a week     |          -0.117 (0.618) |         0.122 (0.369) |
-| \`Out of school lessons \<science\>\`4 up to 6 hours per week   |          -1.091 (0.789) |        -0.837 (0.549) |
-| \`Out of school lessons \<science\>\`Do not attend              |          -0.565 (0.717) |        -0.456 (0.472) |
-| \`Out of school lessons \<science\>\`Less than 2 hours a week   |          -0.534 (0.751) |        -0.513 (0.464) |
-| n                                                               |                783      |             3925.000  |
-| \*\*\* p \< 0.001; \*\* p \< 0.01; \* p \< 0.05.                |                         |                       |
+|  | Pooled from downsamples | Complete data |
+|----|---:|---:|
+| (Intercept) | 5.516 \* (2.376) | 7.862 \*\*\* (1.657) |
+| SexMale | -0.823 \*\* (0.244) | -0.762 \*\*\* (0.149) |
+| \`Attend \<ISCED 0\>\`Yes, one year or less | 0.495 (0.286) | 0.498 \*\* (0.190) |
+| \`Age at \<ISCED 1\>\` | 0.087 (0.186) | 0.075 (0.104) |
+| \`Repeat \<ISCED 1\>\`Yes, once | 0.693 (0.548) | 0.645 (0.345) |
+| \`At Home - Mother\`TRUE | -0.888 (0.843) | -0.921 (0.493) |
+| \`At Home - Father\`TRUE | -0.672 (0.414) | -0.620 \* (0.277) |
+| \`At Home - Brothers\`TRUE | 0.184 (0.313) | 0.155 (0.146) |
+| \`At Home - Sisters\`TRUE | 0.563 \* (0.237) | 0.454 \*\* (0.146) |
+| \`At Home - Grandparents\`TRUE | -0.725 \* (0.328) | -0.648 \*\* (0.201) |
+| \`At Home - Others\`TRUE | -0.094 (0.332) | -0.136 (0.221) |
+| \`Mother \<Highest Schooling\>\`\<ISCED level 3A\> | 0.101 (0.631) | 0.070 (0.388) |
+| \`Mother Current Job Status\`Other | -0.457 (0.609) | -0.303 (0.364) |
+| \`Mother Current Job Status\`Working Full-time | -0.608 (0.537) | -0.443 (0.339) |
+| \`Mother Current Job Status\`Working Part-Time | -0.586 (0.650) | -0.446 (0.369) |
+| \`Father \<Highest Schooling\>\`\<ISCED level 2\> | 0.072 (1.219) | 0.077 (0.832) |
+| \`Father \<Highest Schooling\>\`\<ISCED level 3A\> | -0.579 (1.121) | -0.658 (0.754) |
+| \`Father Current Job Status\`Other | -0.019 (0.737) | -0.065 (0.394) |
+| \`Father Current Job Status\`Working Full-time | 0.356 (0.604) | 0.236 (0.324) |
+| \`Father Current Job Status\`Working Part-Time | 1.260 (0.892) | 0.998 (0.529) |
+| \`Language at home\`Language of test | 0.137 (0.489) | -0.104 (0.263) |
+| \`Possessions desk\`TRUE | -0.583 (0.404) | -0.531 \* (0.265) |
+| \`Possessions own room\`TRUE | 0.521 (0.384) | 0.600 \* (0.238) |
+| \`Possessions study place\`TRUE | -0.056 (0.488) | -0.223 (0.303) |
+| \`Possessions computer\`TRUE | -0.077 (0.855) | -0.038 (0.592) |
+| \`Possessions software\`TRUE | 0.365 (0.332) | 0.358 \* (0.161) |
+| \`Possessions Internet\`TRUE | -1.416 (0.917) | -1.177 (0.602) |
+| \`Possessions literature\`TRUE | -0.619 \* (0.295) | -0.551 \*\* (0.175) |
+| \`Possessions poetry\`TRUE | -0.369 (0.308) | -0.250 (0.176) |
+| \`Possessions art\`TRUE | -0.402 (0.333) | -0.273 (0.196) |
+| \`Possessions textbooks\`TRUE | -0.021 (0.356) | -0.007 (0.214) |
+| \`Possessions dictionary\`TRUE | 0.100 (0.583) | -0.000 (0.422) |
+| \`Possessions dishwasher\`TRUE | -0.074 (0.336) | -0.078 (0.234) |
+| \`How many cellular phones\`Three or more | -0.851 (0.987) | -0.906 (0.741) |
+| \`How many cellular phones\`Two | -0.192 (0.985) | -0.478 (0.771) |
+| \`How many televisions\`Three or more | 1.378 \* (0.645) | 0.995 \*\*\* (0.302) |
+| \`How many televisions\`Two | 0.816 (0.640) | 0.519 (0.324) |
+| \`How many computers\`One | 0.589 (1.188) | 0.343 (0.823) |
+| \`How many computers\`Three or more | 0.174 (1.168) | -0.072 (0.838) |
+| \`How many computers\`Two | 0.079 (1.143) | -0.120 (0.832) |
+| \`How many cars\`Three or more | 0.038 (0.458) | -0.041 (0.295) |
+| \`How many cars\`Two | -0.223 (0.427) | -0.264 (0.291) |
+| \`How many rooms bath or shower\`Three or more | -1.001 \* (0.427) | -0.703 \*\* (0.238) |
+| \`How many rooms bath or shower\`Two | -0.223 (0.371) | -0.107 (0.217) |
+| \`How many books at home\`101-200 books | -0.255 (0.440) | -0.367 (0.327) |
+| \`How many books at home\`11-25 books | -0.158 (0.431) | -0.158 (0.339) |
+| \`How many books at home\`201-500 books | -0.998 \* (0.477) | -0.985 \*\* (0.334) |
+| \`How many books at home\`26-100 books | -0.498 (0.395) | -0.489 (0.302) |
+| \`How many books at home\`More than 500 books | -1.082 (0.558) | -1.042 \*\* (0.366) |
+| \`Reading Enjoyment Time\`30 minutes or less a day | -0.071 (0.477) | -0.183 (0.251) |
+| \`Reading Enjoyment Time\`Between 30 and 60 minutes | 0.494 (0.457) | 0.311 (0.283) |
+| \`Reading Enjoyment Time\`I don't read for enjoyment | -0.019 (0.466) | -0.118 (0.259) |
+| \`Reading Enjoyment Time\`More than 2 hours a day | 0.245 (0.747) | 0.208 (0.406) |
+| \`\<Enrich\> in \<test lang\>\`TRUE | -0.012 (0.671) | 0.242 (0.413) |
+| \`\<Enrich\> in \<mathematics\>\`TRUE | -0.236 (0.569) | -0.276 (0.323) |
+| \`\<Enrich\> in \<science\>\`TRUE | 0.576 (0.634) | 0.367 (0.410) |
+| \`\<Remedial\> in \<test lang\>\`TRUE | 0.311 (0.964) | 0.041 (0.524) |
+| \`\<Remedial\> in \<mathematics\>\`TRUE | -0.511 (0.685) | -0.614 (0.384) |
+| \`\<Remedial\> in \<science\>\`TRUE | -0.197 (0.789) | 0.245 (0.496) |
+| \`Out of school lessons \<test lang\>\`Do not attend | -0.279 (0.815) | -0.106 (0.493) |
+| \`Out of school lessons \<test lang\>\`Less than 2 hours a week | -0.685 (0.712) | -0.533 (0.465) |
+| \`Out of school lessons \<maths\>\`4 up to 6 hours per week | 0.237 (0.902) | 0.386 (0.541) |
+| \`Out of school lessons \<maths\>\`Do not attend | -0.254 (0.798) | -0.160 (0.410) |
+| \`Out of school lessons \<maths\>\`Less than 2 hours a week | -0.117 (0.618) | 0.122 (0.369) |
+| \`Out of school lessons \<science\>\`4 up to 6 hours per week | -1.091 (0.789) | -0.837 (0.549) |
+| \`Out of school lessons \<science\>\`Do not attend | -0.565 (0.717) | -0.456 (0.472) |
+| \`Out of school lessons \<science\>\`Less than 2 hours a week | -0.534 (0.751) | -0.513 (0.464) |
+| n | 783      | 3925.000  |
+| \*\*\* p \< 0.001; \*\* p \< 0.01; \* p \< 0.05. |  |  |
 
 ## Appendix B: Random Forest
 
@@ -343,6 +357,7 @@ use random forest. In order to use classification with
 we must convert our dependent varaible to a factor.
 
 ``` r
+
 library(randomForest)
 data('pisa', package = 'medley')
 data('pisa_variables', package = 'medley')
@@ -357,6 +372,7 @@ Setting `model_fun = randomForest` will estimate random forest models
 for each of the models.
 
 ``` r
+
 pisa_ds_out_rf <- downsample(
   formu = pisa_formu,
   data = pisa_train,
@@ -366,6 +382,7 @@ pisa_ds_out_rf <- downsample(
 ```
 
 ``` r
+
 length(pisa_ds_out_rf)
 #> [1] 7
 
@@ -387,6 +404,7 @@ There are several ways we can handle this. Here we use a simple voting
 strategy.
 
 ``` r
+
 pisa_predictions_ds_rf_vote <- apply(
     pisa_predictions_ds_rf, 1, 
     FUN = function(x) { mean(as.logical(x)) > 0.5})

@@ -7,12 +7,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Predictive Modeling with Missing Data • medley</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Predictive Modeling with Missing Data">
-<meta name="description" content="Routines to estimate prediction models when there are systematic patterns to missing data. Utility functions are provided to explore the patterns of missingness and to help determine the set of models used for training and predicting.">
-<meta property="og:description" content="Routines to estimate prediction models when there are systematic patterns to missing data. Utility functions are provided to explore the patterns of missingness and to help determine the set of models used for training and predicting.">
+<meta name="description" content="Routines to estimate prediction models when there are systematic patterns to missing data. Utility functions are provided to explore the patterns of missingness and to help determine the set of models used for training and predicting. &lt;https://medley.bryer.org/articles/medley.html&gt;">
+<meta property="og:description" content="Routines to estimate prediction models when there are systematic patterns to missing data. Utility functions are provided to explore the patterns of missingness and to help determine the set of models used for training and predicting. &lt;https://medley.bryer.org/articles/medley.html&gt;">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -37,6 +37,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/downsampling.html">Downsampling for Predictive Modeling</a></li>
+    <li><a class="dropdown-item" href="articles/stratified_glm.html">Stratified Modeling for Imbalanced Data</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -59,7 +60,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><strong>Author:</strong> Jason Bryer, Ph.D. <a href="mailto:jason@bryer.org" class="email">jason@bryer.org</a><br><strong>Website:</strong> <a href="https://jbryer.github.io/medley/" class="external-link uri">https://jbryer.github.io/medley/</a></p>
+<p><strong>Author:</strong> Jason Bryer, Ph.D. <a href="mailto:jason@bryer.org" class="email">jason@bryer.org</a><br><strong>Website:</strong> <a href="https://medley.bryer.org/" class="external-link uri">https://medley.bryer.org/</a></p>
 <p><a href="https://github.com/jbryer/medley/blob/master/slides/medley_useR_2025.pdf" class="external-link">Slides from useR! 2025 conference</a></p>
 <p>Most predictive modeling strategies require there to be no missing data for model estimation. When there is missing data, there are generally two strategies for working with missing data: 1.) exclude the variables (columns) or observations (rows) where there is missing data; or 2.) impute the missing data. However, data is often missing in systematic ways. Excluding data from training is ignoring potentially predictive information and for many imputation procedures the missing completely at random (MCAR) assumption is violated.</p>
 <p>The <code>medley</code> package implements a solution to modeling when there are systematic patterns of missingness. A working example of predicting student retention from a larger study of the Diagnostic Assessment and Achievement of College Skills (DAACS) will be explored. In this study, demographic data was collected at enrollment from all students and then students completed diagnostic assessments in self-regulated learning (SRL), writing, mathematics, and reading during their first few weeks of the semester. Although all students were expected to complete DAACS, there were no consequence and therefore a large percentage of student completed none or only some of the assessments. The resulting dataset has three predominate response patterns: 1.) students who completed all four assessments, 2.) students who completed only the SRL assessment, and 3). students who did not complete any of the assessments.</p>
@@ -108,7 +109,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://cran.r-project.org/package=medley" class="external-link"><img src="https://www.r-pkg.org/badges/version/medley?color=orange"></a></li>
-<li><a href="https://github.com/jbryer/medley" class="external-link"><img src="https://img.shields.io/badge/devel%20version-0.9.4-blue.svg"></a></li>
+<li><a href="https://github.com/jbryer/medley" class="external-link"><img src="https://img.shields.io/badge/devel%20version-1.0.0-blue.svg"></a></li>
 <li><a href="https://github.com/jbryer/medley/actions" class="external-link"><img src="https://github.com/jbryer/medley/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
 </ul>
 </div>
@@ -122,7 +123,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

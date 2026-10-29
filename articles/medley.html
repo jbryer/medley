@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>medley: Predictive Modeling with Missing Data • medley</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="medley: Predictive Modeling with Missing Data">
 </head>
@@ -35,6 +35,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/downsampling.html">Downsampling for Predictive Modeling</a></li>
+    <li><a class="dropdown-item" href="../articles/stratified_glm.html">Stratified Modeling for Imbalanced Data</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -53,7 +54,7 @@
 
 
 
-
+<link href="medley_files/huxtable-6.0.2/huxtable.css" rel="stylesheet">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
@@ -111,15 +112,15 @@ the pattern of missingness. If we convert the data frame to a shadow
 matrix where zero indicates a missing value and one indicates the value
 is observed, we can compute the distribution of the number of
 observations for each combination of observed and missing values. Figure
-@ref(fig:framework-upset) is an upset plot <span class="citation">(Gu,
-Eils, and Schlesner 2016)</span> where the dots indicate that the
-corresponding variable was observed and the bars the size of that set.
-In this example, there are three observations where there is no
-missingness; one row where variable 3 is missing; two observations where
-variables 2 and 3 are missing; and two observations where variables 3,
-4, and 5 are missing.</p>
+@ref(fig:framework-upset) is an upset plot <span class="citation">(Gu et
+al. 2016)</span> where the dots indicate that the corresponding variable
+was observed and the bars the size of that set. In this example, there
+are three observations where there is no missingness; one row where
+variable 3 is missing; two observations where variables 2 and 3 are
+missing; and two observations where variables 3, 4, and 5 are
+missing.</p>
 <div class="figure">
-<img src="medley_upset.png" class="r-plt" alt="Upset plot representing the pattern of missingness." width="258"><p class="caption">
+<img src="medley_upset.png" class="r-plt" alt="Upset plot representing the pattern of missingness." width="90%"><p class="caption">
 Upset plot representing the pattern of missingness.
 </p>
 </div>
@@ -576,8 +577,8 @@ age
 <h3 id="missing-data-patterns">Missing Data Patterns<a class="anchor" aria-label="anchor" href="#missing-data-patterns"></a>
 </h3>
 <p>To begin we first explore the patterns of missing data. Figure
-@ref(fig:upset) is an UpSet plot <span class="citation">(Gu, Eils, and
-Schlesner 2016)</span> created from a shadow matrix<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;A shadow matrix has the same dimensions of the original
+@ref(fig:upset) is an UpSet plot <span class="citation">(Gu et al.
+2016)</span> created from a shadow matrix<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;A shadow matrix has the same dimensions of the original
 data but the values correspond to whether the observation is missing
 (&lt;code&gt;FALSE&lt;/code&gt;) or not (&lt;code&gt;TRUE&lt;/code&gt;).&lt;/p&gt;"><sup>1</sup></a>. Each vertical line
 corresponds to a set, or combination, of variables. The dots indicate
@@ -853,7 +854,7 @@ the models directly by passing a list of formulas with the
 <code>var_sets</code> parameter.</p>
 <p>Table @ref(tab:modelresults) provides the model summaries for the 3
 models estimated.</p>
-<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:modelresults">
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;   break-inside: avoid; page-break-inside: avoid;" id="tab:modelresults">
 <caption style="caption-side: top; text-align: center;">(#tab:modelresults) Logistic regression results</caption>
 <col>
 <col>
@@ -1049,8 +1050,8 @@ models estimated.</p>
 <td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;">2029.291    </td>
 <td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;">     </td>
 </tr>
-<tr><th class="huxtable-cell huxtable-header" colspan="7" style="border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;      font-weight: normal;">*** p &lt; 0.001; ** p &lt; 0.01; * p &lt; 0.05.</th></tr>
 </tbody>
+<tfoot class="huxtable-notes"><tr><td class="huxtable-cell huxtable-note" colspan="7">*** p &lt; 0.001; ** p &lt; 0.01; * p &lt; 0.05.</td></tr></tfoot>
 </table>
 <p>The S3 generic function <code>predict</code> has been implemented.
 Specifying the <code>newdata</code> parameter will give predictions for
@@ -1219,11 +1220,11 @@ retention rate of 56.17%.</p>
               Medley with random forest    FALSE 320 (20.69%) 361 (23.34%)         
                                             TRUE 194 (12.54%) 672 (43.44%)         
                                                                              64.12%</code></pre>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-ComplexHeatmap" class="csl-entry">
 Gu, Zuguang, Roland Eils, and Matthias Schlesner. 2016. <span>“Complex
 Heatmaps Reveal Patterns and Correlations in Multidimensional Genomic
-Data.”</span> <em>Bioinformatics</em>. <a href="https://doi.org/10.1093/bioinformatics/btw313" class="external-link">https://doi.org/10.1093/bioinformatics/btw313</a>.
+Data.”</span> <em>Bioinformatics</em>, ahead of print. <a href="https://doi.org/10.1093/bioinformatics/btw313" class="external-link">https://doi.org/10.1093/bioinformatics/btw313</a>.
 </div>
 </div>
 </div>
@@ -1239,7 +1240,7 @@ Data.”</span> <em>Bioinformatics</em>. <a href="https://doi.org/10.1093/bioinf
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

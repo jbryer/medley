@@ -4,6 +4,7 @@
 <url><loc>/articles/downsampling.html</loc></url>
 <url><loc>/articles/index.html</loc></url>
 <url><loc>/articles/medley.html</loc></url>
+<url><loc>/articles/stratified_glm.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
@@ -15,6 +16,7 @@
 <url><loc>/reference/daacs.html</loc></url>
 <url><loc>/reference/downsample.html</loc></url>
 <url><loc>/reference/expand_formula.html</loc></url>
+<url><loc>/reference/find_path_intersections.html</loc></url>
 <url><loc>/reference/get_variable_sets.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/medley.html</loc></url>
@@ -22,5 +24,6 @@
 <url><loc>/reference/pisa.html</loc></url>
 <url><loc>/reference/pisa_variables.html</loc></url>
 <url><loc>/reference/recode_small_levels.html</loc></url>
+<url><loc>/reference/stratified_glm.html</loc></url>
 </urlset>
 

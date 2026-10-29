@@ -41,12 +41,12 @@ missingness. If we convert the data frame to a shadow matrix where zero
 indicates a missing value and one indicates the value is observed, we
 can compute the distribution of the number of observations for each
 combination of observed and missing values. Figure
-@ref(fig:framework-upset) is an upset plot (Gu, Eils, and Schlesner
-2016) where the dots indicate that the corresponding variable was
-observed and the bars the size of that set. In this example, there are
-three observations where there is no missingness; one row where variable
-3 is missing; two observations where variables 2 and 3 are missing; and
-two observations where variables 3, 4, and 5 are missing.
+@ref(fig:framework-upset) is an upset plot (Gu et al. 2016) where the
+dots indicate that the corresponding variable was observed and the bars
+the size of that set. In this example, there are three observations
+where there is no missingness; one row where variable 3 is missing; two
+observations where variables 2 and 3 are missing; and two observations
+where variables 3, 4, and 5 are missing.
 
 ![Upset plot representing the pattern of missingness.](medley_upset.png)
 
@@ -121,27 +121,27 @@ some students. The overall retention base rate is 56.17%.
 | … Yes                       | 2273 | 44%  |         |        |
 | age                         |      | 35   | 9.3     | 34     |
 
-Descriptive Statistics
+Descriptive Statistics {.table}
 
 ### Missing Data Patterns
 
 To begin we first explore the patterns of missing data. Figure
-@ref(fig:upset) is an UpSet plot (Gu, Eils, and Schlesner 2016) created
-from a shadow matrix[¹](#fn1). Each vertical line corresponds to a set,
-or combination, of variables. The dots indicate that that variable is
-included in the set. The bars on the top correspond to the number of
-observations in that set and the bars to the right correspond to the
-total number of observed values. The largest set includes only the
-demographics variables, the second largest included demographics and all
-DAACS variables. There is a third set that includes self-regulated
-learning along with demographics that is worth considering since it
-contains more than 10% of the observations. It should be noted that
-there is a potential fourth set which included demographic variables
-along with three of DAACS variables (SRL, reading, and math). However,
-since this set has fewer than 10% of the observations we will use a
-three set/model solution.
+@ref(fig:upset) is an UpSet plot (Gu et al. 2016) created from a shadow
+matrix[^1]. Each vertical line corresponds to a set, or combination, of
+variables. The dots indicate that that variable is included in the set.
+The bars on the top correspond to the number of observations in that set
+and the bars to the right correspond to the total number of observed
+values. The largest set includes only the demographics variables, the
+second largest included demographics and all DAACS variables. There is a
+third set that includes self-regulated learning along with demographics
+that is worth considering since it contains more than 10% of the
+observations. It should be noted that there is a potential fourth set
+which included demographic variables along with three of DAACS variables
+(SRL, reading, and math). However, since this set has fewer than 10% of
+the observations we will use a three set/model solution.
 
 ``` r
+
 shadow_matrix <- as.data.frame(!is.na(daacs))
 ComplexHeatmap::make_comb_mat(shadow_matrix) |> ComplexHeatmap::UpSet(right_annotation = NULL)
 ```
@@ -156,6 +156,7 @@ To perform the predictive modeling we will split the data into training
 (70%) and validation (30%) data sets.
 
 ``` r
+
 set.seed(2112); train_rows <- sample(nrow(daacs), nrow(daacs) * 0.7)
 daacs_train <- daacs[train_rows,]
 daacs_valid <- daacs[-train_rows,]
@@ -174,6 +175,7 @@ demographics variables were observed for all students. To start we train
 a logistic regression model on the training data.
 
 ``` r
+
 lr_out <- glm(data = daacs_train,
               formula = retained ~ income + employment + ell + ed_mother + ed_father +
                 ethnicity + gender + military + age,
@@ -187,6 +189,7 @@ We can get predicted values from the validation data set and print the
 confusion matrix.
 
 ``` r
+
 lr_predictions <- predict(lr_out, newdata = daacs_valid, type = 'response')
 confusion_matrix(observed = daacs_valid$retained,
                  predicted = lr_predictions > 0.5)
@@ -220,6 +223,7 @@ the “success” class). This is useful if you wish to plot a receiver
 operating characteristic (ROC) curve as shown in the figure below.
 
 ``` r
+
 calculate_roc(
     predictions = predict(rf_out, newdata = daacs_valid, type = 'prob')[,2],
     observed = daacs_valid$retained
@@ -231,6 +235,7 @@ calculate_roc(
 ### Mean Imputation
 
 ``` r
+
 daacs_complete_mean <- daacs
 for(i in 2:ncol(daacs_complete_mean)) {
     missing_rows <- is.na(daacs_complete_mean[,i])
@@ -241,6 +246,7 @@ for(i in 2:ncol(daacs_complete_mean)) {
 ```
 
 ``` r
+
 daacs_train_complete_mean <- daacs_complete_mean[train_rows,]
 daacs_valid_complete_mean <- daacs_complete_mean[-train_rows,]
 
@@ -278,9 +284,10 @@ Another common approach to modeling with missing data is multiple
 imputation. The `mice` package (Multivariate Imputations by Chained
 Equations) is a robust and popular approach to imputing missing data.
 For simplicity we will use the final imputed data set for
-comparison[²](#fn2).
+comparison[^2].
 
 ``` r
+
 mice_out <- mice::mice(daacs[,-1], M = 5, seed = 2112, printFlag = FALSE)
 daacs_complete_mice <- cbind(retained = daacs$retained, mice::complete(mice_out))
 
@@ -292,6 +299,7 @@ With the missing DAACS data imputed we can train a logistic regression
 model using the full data set.
 
 ``` r
+
 mice_lr_out <- glm(formula = retained ~ .,
                    data = daacs_train_complete_mice,
                    family = binomial(link = logit))
@@ -333,6 +341,7 @@ estimate logistic regression models. The `medley` can take any
 additional parameters that need to be passed to the `method` function.
 
 ``` r
+
 medley_lr_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = glm,
@@ -349,13 +358,13 @@ the pattern of missing data is predictive of success. Students who
 complete all four DAACS assessments are % more likely to be retained
 then students who did not complete any of the assessments.
 
-| Model |    n | Success | Formula                                                                                                                                          |
-|------:|-----:|--------:|:-------------------------------------------------------------------------------------------------------------------------------------------------|
-|     1 | 1268 |   70.98 | retained ~ page_views + srl + math + reading + writing + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age |
-|     2 |  788 |   58.25 | retained ~ page_views + srl + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age                            |
-|     3 | 1551 |   43.20 | retained ~ income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age                                               |
+| Model | n | Success | Formula |
+|---:|---:|---:|:---|
+| 1 | 1268 | 70.98 | retained ~ page_views + srl + math + reading + writing + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age |
+| 2 | 788 | 58.25 | retained ~ page_views + srl + income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age |
+| 3 | 1551 | 43.20 | retained ~ income + employment + ell + ed_mother + ed_father + ethnicity + gender + military + age |
 
-Baseline retention rate by model
+Baseline retention rate by model {.table}
 
 The object returned by `medley` contains the following elements:
 
@@ -378,36 +387,39 @@ formulas with the `var_sets` parameter.
 Table @ref(tab:modelresults) provides the model summaries for the 3
 models estimated.
 
-|                                                  |        \(1\) |         |        \(2\) |         |         \(3\) |         |
-|--------------------------------------------------|-------------:|--------:|-------------:|--------:|--------------:|--------:|
-| (Intercept)                                      |    0.290     | (0.742) |    0.170     | (0.751) |    -0.245     | (0.376) |
-| page_views                                       |   -0.004     | (0.003) |   -0.002     | (0.004) |               |         |
-| srl                                              |   -0.132     | (0.159) |   -0.190     | (0.180) |               |         |
-| math                                             |    0.429     | (0.382) |              |         |               |         |
-| reading                                          |   -0.474     | (0.464) |              |         |               |         |
-| writing                                          |    0.153     | (0.425) |              |         |               |         |
-| income                                           |   -0.003     | (0.029) |    0.046     | (0.035) |    0.062 \*   | (0.025) |
-| employment                                       |    0.152     | (0.087) |   -0.190     | (0.104) |    -0.047     | (0.072) |
-| ell                                              |    0.034     | (0.268) |    0.436     | (0.318) |     0.311     | (0.210) |
-| ed_mother                                        |    0.056     | (0.045) |   -0.001     | (0.053) |    -0.036     | (0.037) |
-| ed_father                                        |    0.011     | (0.044) |    0.093     | (0.052) |     0.024     | (0.036) |
-| ethnicityHispanic                                |   -0.241     | (0.251) |    0.438     | (0.264) |     0.123     | (0.186) |
-| ethnicityOther                                   |   -0.015     | (0.265) |    0.212     | (0.284) |     0.250     | (0.201) |
-| ethnicityWhite                                   |    0.053     | (0.198) |    0.348     | (0.194) |     0.069     | (0.134) |
-| genderMALE                                       |    0.179     | (0.146) |   -0.048     | (0.173) |    0.280 \*   | (0.120) |
-| militaryTRUE                                     | 0.869 \*\*\* | (0.155) | 0.643 \*\*\* | (0.178) |  0.721 \*\*\* | (0.123) |
-| age                                              |    0.004     | (0.008) |   -0.005     | (0.009) | -0.026 \*\*\* | (0.006) |
-| N                                                | 1268         |         |  788         |         |  1551         |         |
-| logLik                                           | -726.090     |         | -512.952     |         | -1002.646     |         |
-| AIC                                              | 1486.180     |         | 1053.905     |         |  2029.291     |         |
-| \*\*\* p \< 0.001; \*\* p \< 0.01; \* p \< 0.05. |              |         |              |         |               |         |
+|  | \(1\) |  | \(2\) |  | \(3\) |  |
+|----|---:|---:|---:|---:|---:|---:|
+| (Intercept) | 0.290     | (0.742) | 0.170     | (0.751) | -0.245     | (0.376) |
+| page_views | -0.004     | (0.003) | -0.002     | (0.004) |          |       |
+| srl | -0.132     | (0.159) | -0.190     | (0.180) |          |       |
+| math | 0.429     | (0.382) |          |       |          |       |
+| reading | -0.474     | (0.464) |          |       |          |       |
+| writing | 0.153     | (0.425) |          |       |          |       |
+| income | -0.003     | (0.029) | 0.046     | (0.035) | 0.062 \*   | (0.025) |
+| employment | 0.152     | (0.087) | -0.190     | (0.104) | -0.047     | (0.072) |
+| ell | 0.034     | (0.268) | 0.436     | (0.318) | 0.311     | (0.210) |
+| ed_mother | 0.056     | (0.045) | -0.001     | (0.053) | -0.036     | (0.037) |
+| ed_father | 0.011     | (0.044) | 0.093     | (0.052) | 0.024     | (0.036) |
+| ethnicityHispanic | -0.241     | (0.251) | 0.438     | (0.264) | 0.123     | (0.186) |
+| ethnicityOther | -0.015     | (0.265) | 0.212     | (0.284) | 0.250     | (0.201) |
+| ethnicityWhite | 0.053     | (0.198) | 0.348     | (0.194) | 0.069     | (0.134) |
+| genderMALE | 0.179     | (0.146) | -0.048     | (0.173) | 0.280 \*   | (0.120) |
+| militaryTRUE | 0.869 \*\*\* | (0.155) | 0.643 \*\*\* | (0.178) | 0.721 \*\*\* | (0.123) |
+| age | 0.004     | (0.008) | -0.005     | (0.009) | -0.026 \*\*\* | (0.006) |
+| N | 1268         |       | 788         |       | 1551         |       |
+| logLik | -726.090     |       | -512.952     |       | -1002.646     |       |
+| AIC | 1486.180     |       | 1053.905     |       | 2029.291     |       |
+| \*\*\* p \< 0.001; \*\* p \< 0.01; \* p \< 0.05. |  |  |  |  |  |  |
 
-(#tab:modelresults) Logistic regression results
+(#tab:modelresults) Logistic regression results {#tab:modelresults
+.table .huxtable quarto-disable-processing="true"
+style="margin-left: auto; margin-right: auto;   break-inside: avoid; page-break-inside: avoid;"}
 
 The S3 generic function `predict` has been implemented. Specifying the
 `newdata` parameter will give predictions for the validation data set.
 
 ``` r
+
 medley_lr_predictions <- predict(medley_lr_out,
                                  newdata = daacs_valid,
                                  type = 'response')
@@ -420,6 +432,7 @@ medley model is 61.086% which is a 5.11% over the baseline, or *null*,
 model.
 
 ``` r
+
 confusion_matrix(observed = daacs_valid$retained,
                  predicted = medley_lr_predictions > 0.5)
 #>               predicted             
@@ -443,6 +456,7 @@ variable to a factor to ensure a classification (versus regression)
 model is estimated.
 
 ``` r
+
 daacs_train$retained <- as.factor(daacs_train$retained)
 daacs_valid$retained <- as.factor(daacs_valid$retained)
 ```
@@ -451,6 +465,7 @@ Training and predicting are the same as above except we set
 `method = randomForest`.
 
 ``` r
+
 medley_rf_out <- medley(data = daacs_train,
                               formula = retained ~ .,
                               method = randomForest)
@@ -466,6 +481,7 @@ though we see the random forest performs sligthly worse than logistic
 regression.
 
 ``` r
+
 confusion_matrix(observed = daacs_valid$retained,
                  predicted = medley_rf_predictions )
 #>               predicted             
@@ -487,6 +503,7 @@ parameter will allow observations to be used in training models for
 which there is complete data.
 
 ``` r
+
 medley_rf_out2 <- medley(data = daacs_train,
                               formula = retained ~ .,
                               exclusive_membership = FALSE,
@@ -522,7 +539,7 @@ model that uses most variables for each observation.
 | Medley with logistic regression                |    64.38 |        8.21 |
 | Medley with random forest                      |    64.12 |        7.95 |
 
-Model performance summary
+Model performance summary {.table}
 
 **Note:** Improvement is the difference with the overall retention rate
 of 56.17%.
@@ -550,16 +567,14 @@ of 56.17%.
 
 Gu, Zuguang, Roland Eils, and Matthias Schlesner. 2016. “Complex
 Heatmaps Reveal Patterns and Correlations in Multidimensional Genomic
-Data.” *Bioinformatics*.
+Data.” *Bioinformatics*, ahead of print.
 <https://doi.org/10.1093/bioinformatics/btw313>.
 
-------------------------------------------------------------------------
+[^1]: A shadow matrix has the same dimensions of the original data but
+    the values correspond to whether the observation is missing
+    (`FALSE`) or not (`TRUE`).
 
-1.  A shadow matrix has the same dimensions of the original data but the
-    values correspond to whether the observation is missing (`FALSE`) or
-    not (`TRUE`).
-
-2.  There are multiple approaches suggested for getting predicted values
-    from models trained using imputed data sets. For a more detailed
-    explenation see this Github issue:
+[^2]: There are multiple approaches suggested for getting predicted
+    values from models trained using imputed data sets. For a more
+    detailed explenation see this Github issue:
     <https://github.com/amices/mice/issues/82>
