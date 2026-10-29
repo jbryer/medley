@@ -1,6 +1,12 @@
+# Variables used in ggplot2 expression
+utils::globalVariables(c('pt', 'y', 'Fitted_Values'))
+
 #' Stratified Generalized Linear Models
 #'
-#'
+#' This modeling approach subdivides the majority class into strata of size of the minority class, times a ratio
+#' (which is 1 by default). The models are combined using the same technique for combining multiple imputed
+#' data sets in order to not decrease standard error estimates with artificially large sample sizes. See
+#' stratified_glm vignette for more details.
 #'
 #' @param formula an object of class "formula" (or one that can be coerced to that class): a symbolic description
 #'        of the model to be fitted. See [stats::glm()] for more information.
@@ -41,8 +47,8 @@
 stratified_glm <- function(
 		formula,
 		data,
-		ratio = 2,
-		family = binomial(link = 'logit'),
+		ratio = 1,
+		family = stats::binomial(link = 'logit'),
 		...
 ) {
 	results <- list(
@@ -52,6 +58,8 @@ stratified_glm <- function(
 	)
 	Y_var <- all.vars(formula)[1]
 
+	results$formula <- formula
+	results$data <- data
 	results$cont_tab <- data[,Y_var,drop=TRUE] |> table(useNA='ifany')
 	prop_tab <- results$cont_tab |> prop.table()
 
@@ -59,13 +67,17 @@ stratified_glm <- function(
 	max_n <- max(results$cont_tab)
 	results$n_models <- floor(max_n / (min_n * ratio))
 
+	if(results$n_models == 1) {
+		stop('There is not enough imbalance to estimate the model.')
+	}
+
 	big_group <- names(results$cont_tab)[results$cont_tab == max_n]
 	small_group <- names(results$cont_tab)[results$cont_tab == min_n]
 
 	results$assignment <- rep(1:results$n_models, length.out = max_n) |> sample()
 	results$group_sizes <- table(results$assignment)
 
-	results$model <- glm(formula = formula, data = data, family = family) # TODO: add ...
+	results$model <- glm(formula = formula, data = data, family = family, ...)
 
 	small_rows <- which(data[,Y_var] == small_group)
 	big_rows <- which(data[,Y_var] == big_group)
@@ -76,8 +88,8 @@ stratified_glm <- function(
 	for(i in 1:results$n_models) {
 		rows <- c(big_rows[results$assignment == i], small_rows)
 		df <- data[rows,]
-		lr_out <- glm(formula, data = df, family = family) # TODO: add ...
-		fitted_values <- fitted(lr_out)
+		lr_out <- glm(formula, data = df, family = family, ...)
+		fitted_values <- stats::fitted(lr_out)
 		results$models[[i]] <- list(
 			model = lr_out,
 			data = df,
@@ -102,10 +114,19 @@ summary.stratified.glm <- function(object, ...) {
 	for(i in 1:object$n_models) {
 		models[[i]] <- object$models[[i]]$model
 	}
-	mitools::MIcombine(models)
+	mic <- mitools::MIcombine(models)
+	data.frame(
+		coefficients = stats::coef(mic),
+		se = sqrt(diag(stats::vcov(mic))),
+		p = MIcombineP(mic)
+	)
 }
 
-
+#' Calculate p-values from [mitools::MIcombine()] object.
+#' This is an internal function.
+#' @param MIcombineRes results from [mitools::MIcombine()].
+#' @param digits integer indicating the number of decimal places (round) or significant digits (signif) to be used.
+#' @return a numeric vector of the p-values.
 MIcombineP <- function(MIcombineRes, digits = 3) {
 	tStat <- MIcombineRes$coefficients / sqrt(diag(MIcombineRes$variance))
 	pVals <- 2 * pt(-abs(tStat), df = MIcombineRes$df)
@@ -124,6 +145,7 @@ fitted.stratified.glm <- function(object, ...) {
 }
 
 #' Get predictions for stratified logistic regression.
+#' from the pooled estimates.
 #' @rdname stratified_glm
 #' @param object results from `stratified_glm()`.
 #' @param newdata optionally, a data frame in which to look for variables with which to predict. If omitted,
@@ -131,14 +153,24 @@ fitted.stratified.glm <- function(object, ...) {
 #' @export
 predict.stratified.glm <- function(object, newdata = NULL, ...) {
 	if(is.null(newdata)) {
-		return(fitted(object))
-	} else {
-		fitted_values <- matrix(nrow = nrow(newdata), ncol = object$n_models)
-		for(i in 1:object$n_models) {
-			fitted_values[,i] <- predict(object$models[[i]]$model, newdata = newdata, ...)
-		}
-		return(fitted_values)
+		newdata <- object$data
 	}
+	# Leaving this here for now. This averages the estimates over all the models
+	# fitted_values <- matrix(nrow = nrow(newdata), ncol = object$n_models)
+	# for(i in 1:object$n_models) {
+	# 	fitted_values[,i] <- predict(object$models[[i]]$model, newdata = newdata, ...)
+	# }
+	# return(fitted_values)
+	models <- list()
+	for(i in 1:object$n_models) {
+		models[[i]] <- object$models[[i]]$model
+	}
+	mic <- mitools::MIcombine(models)
+	mm <- stats::model.matrix(object$formula, data = newdata)
+	z <- apply(mm[,names(mic$coefficients)], 1, FUN = function(x) {
+		sum(x * mic$coefficients) })
+	p <- 1 / (1 + exp(-1 * z))
+	return(p)
 }
 
 #' Plot function for stratified logistic regression.
@@ -152,7 +184,8 @@ predict.stratified.glm <- function(object, newdata = NULL, ...) {
 plot.stratified.glm <- function(x, geom = ggplot2::geom_density(alpha = 0.5), facet = TRUE, ...) {
 	Y_var <- all.vars(x$formula)[1]
 	fitted <- apply(x$fitted, 1, mean, na.rm = TRUE)
-	full_fitted <- fitted(x$model)
+	fitted <- predict(x)
+	full_fitted <- stats::fitted(x$model)
 	df <- rbind(
 		cbind(rep('Full', nrow(x$data)), full_fitted, x$data[,Y_var]),
 		cbind(rep('Stratified', nrow(x$data)), fitted, x$data[,Y_var])
@@ -161,101 +194,32 @@ plot.stratified.glm <- function(x, geom = ggplot2::geom_density(alpha = 0.5), fa
 	df$Fitted_Values <- as.numeric(df$Fitted_Values)
 	p <- ggplot2::ggplot(df, ggplot2::aes(x = Fitted_Values, color = .data[[Y_var]], fill = .data[[Y_var]])) +
 		geom +
-		xlim(c(0, 1))
+		xlim(c(0, 1)) +
+		xlab('Fitted Values')
 	if(facet) {
-		p <- p + ggplot2::facet_wrap(~ Model, ncol = 1)
+		p <- p + ggplot2::facet_wrap(~ Model, ncol = 1, scales = 'free_y')
 	}
 	return(p)
 }
 
+#' Create stratified data sets for modeling training and validation.
+#' @param data data frame to split.
+#' @param outcome_col the variable used for stratification.
+#' @param train_prop proportion of observations used for the training data set.
+#' @return a list with to data frames, `train` and `validation`.
+#' @export
+stratified_split <- function(data, outcome_col, train_prop = 0.8) {
+	indices_by_group <- split(seq_len(nrow(data)), data[[outcome_col]])
 
-if(FALSE) {
-	data('pisausa', package = 'PSAboot')
-	data('pisa.psa.cols', package = 'PSAboot')
+	train_indices <- lapply(indices_by_group, function(indices) {
+		sample_size <- round(length(indices) * train_prop)
+		sample(indices, size = sample_size, replace = FALSE)
+	})
 
-	pisa.psa.cols <- pisa.psa.cols[!pisa.psa.cols %in% c('ST10Q01', 'ST14Q01', 'ST21Q02')]
+	train_idx <- unlist(train_indices)
 
-	pisausa$PUBPRIV |> table(useNA='ifany')
-	pisausa$PUBPRIV |> table(useNA='ifany') |> prop.table()
+	train_set <- data[train_idx, , drop = FALSE]
+	val_set   <- data[-train_idx, , drop = FALSE]
 
-	# formula <- paste0('PUBPRIV ~ ', paste0(pisa.psa.cols, collapse = ' + ')) |> as.formula()
-	# data <- pisausa
-	# ratio <- 2
-	# family <- binomial(link = 'logit')
-
-	results <- stratified_glm(
-		formula = paste0('PUBPRIV ~ ', paste0(pisa.psa.cols, collapse = ' + ')) |> as.formula(),
-		data = pisausa,
-		ratio = 1
-	)
-
-	plot(results)
-	summary(results)
-
-	set.seed(2112); train_rows <- sample(nrow(pisausa), size = .8 * nrow(pisausa))
-	data_train <- pisausa[train_rows,]
-	data_valid <- pisausa[-train_rows,]
-	table(data_train$PUBPRIV) |> prop.table()
-	table(data_valid$PUBPRIV) |> prop.table()
-
-	results_train <- stratified_glm(
-		formula = paste0('PUBPRIV ~ ', paste0(pisa.psa.cols, collapse = ' + ')) |> as.formula(),
-		data = data_train,
-		ratio = 1
-	)
-
-	# Full model
-	full_new_predictions <- predict(results_train$model, newdata = data_valid, type = 'response')
-	hist(full_new_predictions)
-
-	full_roc <- medley::calculate_roc(
-		predictions = full_new_predictions,
-		observed = data_valid$PUBPRIV == 'Private'
-	)
-	summary(full_roc)
-	plot(full_roc)
-
-	full_metrics <- reshape2::melt(full_roc[,c('threshold', 'sensitivity', 'specificity')],
-								   measure.vars = c('sensitivity', 'specificity'))
-	full_sensitivity <- full_metrics[full_metrics$variable == 'sensitivity',c('threshold', 'value')]
-	names(full_sensitivity) <- c('x', 'y')
-
-	full_specificity <- full_metrics[full_metrics$variable == 'specificity',c('threshold', 'value')]
-	names(full_specificity) <- c('x', 'y')
-
-	(full_intersection <- find_path_intersections(full_sensitivity, full_specificity))
-
-	medley::confusion_matrix(
-		observed = data_valid$PUBPRIV == 'Private',
-		predicted = (full_new_predictions > full_intersection[1,1])
-	)
-
-
-	# Stratified model
-	stratified_new_predictions <- predict(results_train, newdata = data_valid, type = 'response') |> apply(1, mean)
-	hist(stratified_new_predictions)
-
-	stratified_roc <- medley::calculate_roc(
-		predictions = stratified_new_predictions,
-		observed = data_valid$PUBPRIV == 'Private'
-	)
-	summary(stratified_roc)
-	plot(stratified_roc)
-
-	stratified_metrics <- reshape2::melt(stratified_roc[,c('threshold', 'sensitivity', 'specificity')],
-								   measure.vars = c('sensitivity', 'specificity'))
-	stratified_sensitivity <- stratified_metrics[stratified_metrics$variable == 'sensitivity',c('threshold', 'value')]
-	names(stratified_sensitivity) <- c('x', 'y')
-
-	stratified_specificity <- stratified_metrics[stratified_metrics$variable == 'specificity',c('threshold', 'value')]
-	names(stratified_specificity) <- c('x', 'y')
-
-	(stratified_intersection <- find_path_intersections(stratified_sensitivity, stratified_specificity))
-
-	medley::confusion_matrix(
-		observed = data_valid$PUBPRIV == 'Private',
-		predicted = stratified_new_predictions > stratified_intersection[1,1]
-	)
-
+	return(list(train = train_set, validation = val_set))
 }
-

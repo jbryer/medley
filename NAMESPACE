@@ -27,6 +27,7 @@ export(recode_small_levels)
 export(sensitivity)
 export(specificity)
 export(stratified_glm)
+export(stratified_split)
 import(ggplot2)
 importFrom(ComplexHeatmap,
   comb_size,
