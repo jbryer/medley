@@ -38,8 +38,8 @@ pisa$Public <- NULL
 formula <- Private ~ .
 tab <- pisa$Private |> table()
 ratios <- seq(1, unname(floor(tab['FALSE'] / tab['TRUE'])))
-data_public <- pisa |> dplyr::filter(!Private)
-data_private <- pisa |> dplyr::filter(Private)
+pisa_public <- pisa |> dplyr::filter(!Private)
+pisa_private <- pisa |> dplyr::filter(Private)
 ```
 
 ## Introduction
@@ -48,22 +48,22 @@ Statistical modeling when there is substantial imbalance in the dependent variab
 
 ## Impact on Fitted Values
 
-In the United States there are broadly two types of schools, public and private. Public schools are funded by property taxes whereas privates schools charge tuition to the families. The [Programme for International Student Assessment](https://www.oecd.org/en/about/programmes/pisa.html) (PISA) is an international evaluation managed by the OECD. It measures how well 15-year-old students apply their knowledge and problem-solving skills in reading, mathematics, and science to real-world challenges. PISA samples students from both public and private schools within the United States. The `medley` package contains a subset of the PISA data for the United States containing `r nrow(pisa)` observations of `r ncol(pisa)` variables. There are `r nrow(data_public)` public school students and `r nrow(data_private)` private school students (`r unname(tab['TRUE'] / nrow(pisa)) * 100`%)
+In the United States there are broadly two types of schools, public and private. Public schools are funded by property taxes whereas privates schools charge tuition to the families. The [Programme for International Student Assessment](https://www.oecd.org/en/about/programmes/pisa.html) (PISA) is an international evaluation managed by the OECD. It measures how well 15-year-old students apply their knowledge and problem-solving skills in reading, mathematics, and science to real-world challenges. PISA samples students from both public and private schools within the United States. The `medley` package contains a subset of the PISA data for the United States containing `r nrow(pisa)` observations of `r ncol(pisa)` variables. There are `r nrow(pisa_public)` public school students and `r nrow(pisa_private)` private school students (`r unname(tab['TRUE'] / nrow(pisa)) * 100`%)
 
-To exemplify the problem with estimating logistic regression with imbalanced data, let's consider several models where the ratio of public-to-private schools varies from 1-to-1 to 14-to-1. Figure \@ref(fig:shrinking-values) represents the distributions of the fitted values from a logistic regression with varying ratios of public-to-private schools. That is, all private school students were used in every model. For the 1-to-1 model, the first `r nrow(data_private)` public school observations, then for the 2-to-1 model the first `r 2 * nrow(data(private))` observations, etcetera until the final model uses all observations. The vertical lines correspond to the median fitted values. With all else equal, as the ratio of public-to-private schools increases, the range of fitted values shrinks towards the majority group.^[See https://psa.bryer.org/appendix-psranges.html for a simulation showing the same result.]
+To exemplify the problem with estimating logistic regression with imbalanced data, let's consider several models where the ratio of public-to-private schools varies from 1-to-1 to 14-to-1. Figure \@ref(fig:shrinking-values) represents the distributions of the fitted values from a logistic regression with varying ratios of public-to-private schools. That is, all private school students were used in every model. For the 1-to-1 model, the first `r nrow(pisa_private)` public school observations, then for the 2-to-1 model the first `r 2 * nrow(pisa_private)` observations, etcetera until the final model uses all observations. The vertical lines correspond to the median fitted values. With all else equal, as the ratio of public-to-private schools increases, the range of fitted values shrinks towards the majority group.^[See https://psa.bryer.org/appendix-psranges.html for a simulation showing the same result.]
 
 ```{r, echo=FALSE}
 fitted_values <- data.frame()
 for(i in ratios) {
 	df <- rbind(
-		data_private,
-		data_public[seq(1, i * nrow(data_private)),]
+		pisa_private,
+		pisa_public[seq(1, i * nrow(pisa_private)),]
 	)
 	lr_out <- glm(formula, data = df, family = binomial(link = 'logit'))
 	fitted_values <- rbind(fitted_values, data.frame(
 		Iter = i,
 		Ratio = paste0(i, ' to 1'), 
-		Group = c(rep('Private', nrow(data_private)), rep('Public', i * nrow(data_private))),
+		Group = c(rep('Private', nrow(pisa_private)), rep('Public', i * nrow(pisa_private))),
 		Fitted = fitted(lr_out)
 	))
 }

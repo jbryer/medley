@@ -151,13 +151,14 @@ plot.roc <- function(
 ) {
 	roc <- x
 	idx_threshold <- which(roc$threshold == attr(roc, 'threshold'))
+	x_limits <- y_limits <- c(-0.05,1.05)
 
 	p1 <- ggplot(roc, aes(x = fpr, y = tpr)) +
 		geom_line() +
 		geom_line(aes(threshold, threshold), color = 'blue') +
 		# geom_vline(xintercept = roc[idx_threshold, 'fpr', drop = TRUE], linetype = 2) +
 		# geom_hline(yintercept = roc[idx_threshold, 'tpr', drop = TRUE], linetype = 2) +
-		xlim(c(0,1)) + ylim(c(0,1)) +
+		xlim(x_limits) + ylim(y_limits) +
 		coord_equal() +
 		xlab('False Positive Rate') + ylab("True Positive Rate") +
 		ggtitle('ROC Curve', subtitle = paste0('AUC = ', round(attr(roc, 'auc'), digits = digits)))
@@ -267,7 +268,7 @@ plot.roc <- function(
 					   hjust = -0.05, vjust = 0) +
 			legend.theme +
 			coord_equal() +
-			ylim(c(-0.05,1)) + xlim(c(-0.05,1)) +
+			ylim(y_limits) + xlim(x_limits) +
 			xlab('Threshold') +
 			ylab('Accuracy') +
 			ggtitle('Accuracy Curve', subtitle = threshold.label)
